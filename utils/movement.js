@@ -57,26 +57,21 @@ export default function createKeyboardHandler(currentPlayer, allPlayers, state, 
         );
         
         if (!playerAtPosition) {
-          return {
-            type: "MOVE_PLAYER",
-            playerId: currentPlayer.id,
-            x: newX,
-            y: newY,
-            direction: direction
-          };
+          // Send movement to server via WebSocket
+          if (window.wsClient && window.wsClient.isConnected) {
+            window.wsClient.sendPlayerMove(newX, newY, direction);
+          }
+          return null; // Don't update state locally, let server handle it
         }
       }
     }
     
     // If movement is blocked, just update direction
     if (direction !== currentPlayer.direction) {
-      return {
-        type: "MOVE_PLAYER",
-        playerId: currentPlayer.id,
-        x: currentPlayer.x,
-        y: currentPlayer.y,
-        direction: direction
-      };
+      if (window.wsClient && window.wsClient.isConnected) {
+        window.wsClient.sendPlayerMove(currentPlayer.x, currentPlayer.y, direction);
+      }
+      return null; // Don't update state locally, let server handle it
     }
   };
 }
