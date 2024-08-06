@@ -660,6 +660,106 @@ button:disabled {
     background-image: url('assets/B1/b1walkDown.png');
 }
 
+/* Player avatar styles for waiting room */
+.player-avatar {
+    width: 40px;
+    height: 40px;
+    margin: 0 auto 0.5rem;
+    background-size: contain;
+    background-repeat: no-repeat;
+    background-position: center;
+}
+
+.player-avatar.player-b1 {
+    background-image: url('assets/B1/b1walkDown.png');
+}
+
+.player-avatar.player-b2 {
+    background-image: url('assets/B2/walkingdown.png');
+}
+
+.player-avatar.player-b3 {
+    background-image: url('assets/B3/down.png');
+}
+
+.player-avatar.player-b4 {
+    background-image: url('assets/B4/down.png');
+}
+
+/* Bomb sprite */
+.bomb-sprite {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 60%;
+    height: 60%;
+    background-image: url('assets/bomb.png');
+    background-size: contain;
+    background-repeat: no-repeat;
+    background-position: center;
+    z-index: 5;
+    animation: bomb-pulse 1s ease-in-out infinite alternate;
+}
+
+@keyframes bomb-pulse {
+    0% { transform: translate(-50%, -50%) scale(1); }
+    100% { transform: translate(-50%, -50%) scale(1.1); }
+}
+
+/* Explosion sprite */
+.explosion-sprite {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-image: url('assets/BomberManEffect.png');
+    background-size: cover;
+    background-repeat: no-repeat;
+    background-position: center;
+    z-index: 15;
+    animation: explosion-flash 0.5s ease-out;
+}
+
+@keyframes explosion-flash {
+    0% { opacity: 1; transform: scale(0.5); }
+    50% { opacity: 1; transform: scale(1.2); }
+    100% { opacity: 0; transform: scale(1); }
+}
+
+/* Power-up sprites */
+.powerup-sprite {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 50%;
+    height: 50%;
+    background-size: contain;
+    background-repeat: no-repeat;
+    background-position: center;
+    z-index: 8;
+    animation: powerup-float 2s ease-in-out infinite;
+}
+
+@keyframes powerup-float {
+    0%, 100% { transform: translate(-50%, -50%) translateY(0px); }
+    50% { transform: translate(-50%, -50%) translateY(-3px); }
+}
+
+.powerup-sprite.powerup-bomb {
+    background-image: url('assets/bomb-powerup.png');
+}
+
+.powerup-sprite.powerup-flame {
+    background-image: url('assets/range.png');
+}
+
+.powerup-sprite.powerup-speed {
+    background-image: url('assets/speed.png');
+}
+
 .board-cell {
     flex: 1;
     aspect-ratio: 1;
