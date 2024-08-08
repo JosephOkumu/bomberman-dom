@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bomberman Test</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        .status { padding: 10px; margin: 10px 0; border-radius: 5px; }
+        .connected { background: #d4edda; color: #155724; }
+        .disconnected { background: #f8d7da; color: #721c24; }
+        .message { background: #d1ecf1; color: #0c5460; margin: 5px 0; padding: 5px; }
+    </style>
+</head>
+<body>
+    <h1>Bomberman WebSocket Test</h1>
+    
+    <div id="status" class="status disconnected">Disconnected</div>
+    
+    <div>
+        <label for="nickname">Nickname:</label>
+        <input type="text" id="nickname" value="TestPlayer" />
+        <button onclick="connect()">Connect</button>
+        <button onclick="disconnect()">Disconnect</button>
+    </div>
+    
+    <div>
+        <h3>Messages:</h3>
+        <div id="messages"></div>
+    </div>
+
+    <script>
+        let ws = null;
+        const statusDiv = document.getElementById('status');
+        const messagesDiv = document.getElementById('messages');
+        
+        function updateStatus(connected) {
+            statusDiv.textContent = connected ? 'Connected' : 'Disconnected';
+            statusDiv.className = 'status ' + (connected ? 'connected' : 'disconnected');
+        }
+        
+        function addMessage(text) {
+            const div = document.createElement('div');
+            div.className = 'message';
+            div.textContent = new Date().toLocaleTimeString() + ': ' + text;
+            messagesDiv.appendChild(div);
+            messagesDiv.scrollTop = messagesDiv.scrollHeight;
+        }
+        
+        function connect() {
+            const nickname = document.getElementById('nickname').value;
+            if (!nickname) {
+                alert('Please enter a nickname');
+                return;
+            }
+            
+            const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+            const host = window.location.hostname;
+            const port = window.location.port || (protocol === 'wss:' ? '443' : '3000');
+            const url = `${protocol}//${host}:${port}?nickname=${encodeURIComponent(nickname)}`;
+            
+            addMessage('Connecting to: ' + url);
+            
+            ws = new WebSocket(url);
+            
+            ws.onopen = () => {
+                updateStatus(true);
+                addMessage('Connected successfully');
+            };
+            
+            ws.onmessage = (event) => {
+                try {
+                    const data = JSON.parse(event.data);
+                    addMessage('Received: ' + data.type + ' - ' + JSON.stringify(data));
+                } catch (e) {
+                    addMessage('Received: ' + event.data);
+                }
+            };
+            
+            ws.onclose = () => {
+                updateStatus(false);
+                addMessage('Disconnected');
+            };
+            
+            ws.onerror = (error) => {
+                addMessage('Error: ' + error);
+            };
+        }
+        
+        function disconnect() {
+            if (ws) {
+                ws.close();
+                ws = null;
+            }
+        }
+    </script>
+</body>
+</html>
