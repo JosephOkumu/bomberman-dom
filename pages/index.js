@@ -11,14 +11,14 @@ export default (state) => {
                 <input type="text" id="nickname-input" maxlength="12" placeholder="e.g. PixelPioneer">
                 <p id="nickname-error" class="error-message"></p>
             </div>
-            <button id="join-game-btn" disabled>Join Game</button>
+            <button onclick="waiting" id="join-game-btn" disabled>Join Game</button>
         </div>
     </section>
   `
   const handlers = {
     waiting: (e) => {
       e.preventDefault();
-      let path = "/waiting"
+      let path = "/waiting";
       window.history.pushState({}, "", path);
       return { type: "ROUTE_CHANGE", path };
     }
