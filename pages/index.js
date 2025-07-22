@@ -11,31 +11,12 @@ export default (state) => {
               <input type="text" id="nickname-input" maxlength="12" placeholder="e.g. Player1">
               <p id="nickname-error" class="error-message"></p>
           </div>
-          <button id="join-game-btn" disabled>Join Game</button>
+          <button id="join-game-btn" onclick="joinGame">Join Game</button>
       </div>
     </section>
   `
   
-  const handlers = {
-    validateNickname: (e) => {
-      const nickname = e.target.value.trim();
-      const button = e.target.closest('.card').querySelector('#join-game-btn');
-      const errorElement = e.target.closest('.card').querySelector('#nickname-error');
-      
-      if (nickname.length === 0) {
-        button.disabled = true;
-        errorElement.textContent = '';
-      } else if (nickname.length > 12) {
-        button.disabled = true;
-        errorElement.textContent = 'Nickname must be 12 characters or less';
-      } else {
-        button.disabled = false;
-        errorElement.textContent = '';
-      }
-      
-      return null; // No state change needed
-    },
-    
+  const handlers = {    
     joinGame: (e) => {
       e.preventDefault();
       const nickname = e.target.closest('.card').querySelector('#nickname-input').value.trim();
