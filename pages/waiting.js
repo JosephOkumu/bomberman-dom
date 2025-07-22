@@ -1,8 +1,6 @@
 import domParser from "../MiniMvc/domParser.js";
 
 export default (state) => {
-  const nickname = state.nickname || 'Player';
-
   const htmlString = `
     <section id="waiting-room-screen" class="screen">
         <div class="card">
