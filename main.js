@@ -4,7 +4,8 @@ import { createRouteLink } from "./MiniMvc/routeUtils.js";
 const initialState = {
   user: null,
   data: [],
-  counter: 0
+  counter: 0,
+  nickname: null
 };
 
 function update(state, msg) {
@@ -17,6 +18,12 @@ function update(state, msg) {
       return { ...state, counter: state.counter + 1 };
     case "DECREMENT":
       return { ...state, counter: state.counter - 1 };
+    case "ROUTE_CHANGE":
+      return { 
+        ...state, 
+        path: msg.path,
+        nickname: msg.nickname || state.nickname
+      };
     default:
       return state;
   }
