@@ -19,7 +19,7 @@ export default (state) => {
                     <strong id="game-start-timer">10s</strong>
                 </div>
             </div>
-            <button id="start-game-btn" disabled>Start Now</button>
+            <button id="start-game-btn" onclick="start">Start Now</button>
         </div>
       </section>
   `
@@ -28,6 +28,13 @@ export default (state) => {
     goBack: (e) => {
       e.preventDefault();
       const path = "/";
+      window.history.pushState({}, "", path);
+      return { type: "ROUTE_CHANGE", path };
+    },
+
+    start: (e) => {
+      e.preventDefault();
+      const path = "/game";
       window.history.pushState({}, "", path);
       return { type: "ROUTE_CHANGE", path };
     }
