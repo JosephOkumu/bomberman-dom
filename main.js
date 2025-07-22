@@ -26,15 +26,6 @@ function update(state, msg) {
 function createMainView(state, routedContent) {
   return [
     {
-      tag: "nav",
-      children: [
-        createRouteLink("/", "Home", state.enqueue),
-        createRouteLink("/about", "About", state.enqueue),
-        createRouteLink("/contact", "Contact", state.enqueue),
-        createRouteLink("/counter", "Counter", state.enqueue)
-      ]
-    },
-    {
       tag: "main",
       children: [routedContent]
     }
