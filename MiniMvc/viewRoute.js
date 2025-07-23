@@ -1,28 +1,39 @@
 import FileRouter from "./fileRouter.js";
 
 const router = new FileRouter('../pages');
+const componentCache = new Map();
+const routeCache = new Map();
 
 export default async (state) => {
-  // Get current path from state or window location
   const currentPath = state.path || window.location.pathname || '/';
-  console.log('ViewRoute: Processing path:', currentPath);
   
   try {
-    // First try to load the exact route
-    let component = await router.loadPage(currentPath);
-    let params = {};
-    console.log('ViewRoute: Direct load result:', component ? 'success' : 'failed');
+    // Check component cache first
+    const cacheKey = currentPath;
+    if (componentCache.has(cacheKey)) {
+      const cachedComponent = componentCache.get(cacheKey);
+      const enhancedState = { ...state, params: state.params || {}, path: currentPath };
+      return cachedComponent(enhancedState);
+    }
 
-    // If exact route doesn't exist, try pattern matching
+    // Use cached routes if available
+    let routes = routeCache.get('discovered');
+    if (!routes) {
+      routes = await router.discoverRoutes();
+      routeCache.set('discovered', routes);
+    }
+
+    let component = null;
+    let params = {};
+
+    // Try exact route match first
+    component = await router.loadPage(currentPath);
+    
+    // If no exact match, try pattern matching
     if (!component) {
-      console.log('ViewRoute: Trying pattern matching...');
-      const routes = await router.discoverRoutes();
-      console.log('ViewRoute: Available routes:', routes);
-      
       for (const route of routes) {
         const matchedParams = router.matchRoute(currentPath, route);
         if (matchedParams !== null) {
-          console.log('ViewRoute: Matched route:', route, 'with params:', matchedParams);
           component = await router.loadPage(route);
           params = matchedParams;
           break;
@@ -31,15 +42,15 @@ export default async (state) => {
     }
 
     if (component) {
+      // Cache the component for future use
+      componentCache.set(cacheKey, component);
+      
       const enhancedState = { ...state, params, path: currentPath };
-      const result = component(enhancedState);
-      console.log('ViewRoute: Component rendered successfully');
-      return result;
+      return component(enhancedState);
     }
 
-    console.log('ViewRoute: No component found, showing 404');
-    // 404 fallback
-    return { 
+    // 404 fallback - cache this too
+    const fallback404 = () => ({ 
       tag: "div", 
       attr: { class: "error-404" },
       children: [
@@ -60,7 +71,11 @@ export default async (state) => {
           children: [{ text: "Go Home" }]
         }
       ]
-    };
+    });
+    
+    componentCache.set(cacheKey, fallback404);
+    return fallback404(state);
+    
   } catch (error) {
     console.error('Routing error:', error);
     return { 
