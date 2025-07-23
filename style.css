@@ -215,73 +215,113 @@ button:disabled {
     min-height: 0; /* Allow flex shrinking */
 }
 
-/* Game Board Styles */
+/* Game Board Styles - Classic Bomberman Aesthetic with Dark Theme Integration */
 .game-board {
     display: flex;
     flex-direction: column;
-    background: #000;
-    border: 2px solid var(--secondary);
+    background: var(--bg-light);
+    border: 3px solid var(--secondary);
     border-radius: var(--border-radius);
     overflow: hidden;
     width: 90%;
     height: 85%;
-    aspect-ratio: 31 / 13; /* Based on board dimensions */
+    aspect-ratio: 31 / 13;
     margin: auto;
+    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.4);
 }
 
 .board-row {
     display: flex;
     flex: 1;
-    min-height: 0; /* Allow flex shrinking */
+    min-height: 0;
 }
 
 .board-cell {
     flex: 1;
     aspect-ratio: 1;
     position: relative;
-    border: 1px solid rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(0, 0, 0, 0.3);
     box-sizing: border-box;
-    min-width: 0; /* Allow flex shrinking */
+    min-width: 0;
 }
 
+/* Classic Bomberman Brick Walls - Dark Theme */
 .board-cell.wall {
-    background: linear-gradient(135deg, #4a4a4a 0%, #2a2a2a 50%, #1a1a1a 100%);
-    border-color: #666;
-    box-shadow: inset 0 0 4px rgba(0, 0, 0, 0.5);
+    background: linear-gradient(135deg, #4a3728 0%, #3d2f22 25%, #2f241a 50%, #3a2b1f 75%, #4a3728 100%);
+    border: 1px solid #1a1410;
+    position: relative;
+    box-shadow: 
+        inset 2px 2px 4px rgba(255, 200, 150, 0.1),
+        inset -2px -2px 4px rgba(0, 0, 0, 0.6),
+        0 2px 4px rgba(0, 0, 0, 0.4);
 }
 
+/* Brick pattern overlay - Dark Theme */
 .board-cell.wall::before {
     content: '';
     position: absolute;
-    top: 2px;
-    left: 2px;
-    right: 2px;
-    bottom: 2px;
-    background: linear-gradient(45deg, #5a5a5a 25%, transparent 25%), 
-                linear-gradient(-45deg, #5a5a5a 25%, transparent 25%);
-    background-size: 4px 4px;
-    background-position: 0 0, 2px 2px;
-    opacity: 0.3;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-image: 
+        linear-gradient(90deg, #1a1410 1px, transparent 1px),
+        linear-gradient(180deg, #1a1410 1px, transparent 1px);
+    background-size: 8px 4px;
+    background-position: 0 0, 0 2px;
+    opacity: 0.7;
 }
 
-.board-cell.path {
-    background: linear-gradient(135deg, #2d4a2d 0%, #1a3a1a 50%, #0d2d0d 100%);
-    border-color: rgba(64, 197, 175, 0.2);
-}
-
-.board-cell.path::after {
+/* Brick mortar lines - Dark Theme */
+.board-cell.wall::after {
     content: '';
     position: absolute;
     top: 50%;
-    left: 50%;
-    width: 60%;
-    height: 60%;
-    transform: translate(-50%, -50%);
-    background: radial-gradient(circle, rgba(64, 197, 175, 0.1) 0%, transparent 70%);
-    border-radius: 50%;
+    left: 0;
+    right: 0;
+    height: 1px;
+    background: #1a1410;
+    opacity: 0.9;
 }
 
-/* Enhanced game area to accommodate larger board */
+/* Classic Bomberman Floor Tiles - Dark Theme */
+.board-cell.path {
+    background: linear-gradient(45deg, #3a3f5a 25%, #2f3449 25%, #2f3449 50%, #3a3f5a 50%, #3a3f5a 75%, #2f3449 75%);
+    background-size: 4px 4px;
+    border: 1px solid #1e2238;
+    box-shadow: 
+        inset 1px 1px 2px rgba(64, 197, 175, 0.05),
+        inset -1px -1px 2px rgba(0, 0, 0, 0.3);
+    position: relative;
+}
+
+/* Floor tile grid lines - Dark Theme */
+.board-cell.path::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-image: 
+        linear-gradient(90deg, rgba(30, 34, 56, 0.4) 1px, transparent 1px),
+        linear-gradient(180deg, rgba(30, 34, 56, 0.4) 1px, transparent 1px);
+    background-size: 100% 100%;
+    pointer-events: none;
+}
+
+/* Subtle floor depth - Dark Theme */
+.board-cell.path::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 2px;
+    background: linear-gradient(to bottom, transparent, rgba(0, 0, 0, 0.2));
+}
+
+/* Enhanced game area styling */
 .game-area {
     display: flex;
     align-items: center;
@@ -291,14 +331,15 @@ button:disabled {
     border-radius: var(--border-radius);
     overflow: hidden;
     padding: 0.5rem;
-    min-height: 0; /* Allow flex shrinking */
+    min-height: 0;
 }
 
-/* Responsive board sizing */
+/* Responsive adjustments for classic styling */
 @media (max-width: 1200px) {
     .game-board {
         width: 95%;
         height: 90%;
+        border-width: 2px;
     }
 }
 
@@ -310,6 +351,14 @@ button:disabled {
     
     .board-cell {
         border-width: 0.5px;
+    }
+    
+    .board-cell.wall::before {
+        background-size: 6px 3px;
+    }
+    
+    .board-cell.path {
+        background-size: 3px 3px;
     }
     
     .game-area {
@@ -324,12 +373,17 @@ button:disabled {
         border-width: 1px;
     }
     
-    .board-cell {
-        border: none;
+    .board-cell.wall::before,
+    .board-cell.wall::after {
+        display: none;
     }
     
-    .board-cell.wall::before {
+    .board-cell.path::before {
         display: none;
+    }
+    
+    .board-cell.path {
+        background-size: 2px 2px;
     }
     
     .game-area {
@@ -337,7 +391,7 @@ button:disabled {
     }
 }
 
-/* Game layout adjustments for larger board */
+/* Game layout and overlay remain unchanged */
 .game-layout {
     display: grid;
     grid-template-columns: 1fr 320px;
@@ -346,15 +400,13 @@ button:disabled {
     height: 100%;
     max-width: 1600px;
     margin: 0 auto;
-    min-height: 0; /* Allow flex shrinking */
+    min-height: 0;
 }
 
-/* Hide canvas when board is displayed */
 #game-canvas {
     display: none;
 }
 
-/* Game overlay positioning over larger board */
 #game-overlay {
     position: absolute;
     top: 1rem;
