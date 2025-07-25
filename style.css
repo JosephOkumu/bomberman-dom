@@ -245,9 +245,10 @@ button:disabled {
     min-width: 0;
 }
 
-/* Classic Bomberman Brick Walls - Dark Theme */
+/* Classic Bomberman Brick Walls - Dark Theme with Texture */
 .board-cell.wall {
-    background: linear-gradient(135deg, #4a3728 0%, #3d2f22 25%, #2f241a 50%, #3a2b1f 75%, #4a3728 100%);
+    background: url('gray.jpeg') repeat;
+    background-size: cover;
     border: 1px solid #1a1410;
     position: relative;
     box-shadow: 
@@ -256,32 +257,13 @@ button:disabled {
         0 2px 4px rgba(0, 0, 0, 0.4);
 }
 
-/* Brick pattern overlay - Dark Theme */
+/* Remove the gradient-based brick pattern overlays */
 .board-cell.wall::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background-image: 
-        linear-gradient(90deg, #1a1410 1px, transparent 1px),
-        linear-gradient(180deg, #1a1410 1px, transparent 1px);
-    background-size: 8px 4px;
-    background-position: 0 0, 0 2px;
-    opacity: 0.7;
+    display: none;
 }
 
-/* Brick mortar lines - Dark Theme */
 .board-cell.wall::after {
-    content: '';
-    position: absolute;
-    top: 50%;
-    left: 0;
-    right: 0;
-    height: 1px;
-    background: #1a1410;
-    opacity: 0.9;
+    display: none;
 }
 
 /* Classic Bomberman Floor Tiles - Dark Theme */
