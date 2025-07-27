@@ -1,0 +1,44 @@
+<!doctype html>
+<html>
+    <head>
+        <meta charset="UTF-8" />
+        <link rel="stylesheet" href="style.css" />
+    </head>
+
+    <body>
+        <h1>Animated Sprite Sheet</h1>
+
+        <div class="frame">
+            <div id="sprite" class="animatedSprite"></div>
+        </div>
+
+        <div class="grid">
+            <!-- 🔥 Top (UP) -->
+            <div class="tile" style="grid-column: 4; grid-row: 3">
+                <div class="explosion vertical up"></div>
+            </div>
+
+            <!-- 🔥 Center -->
+            <div class="tile" style="grid-column: 4; grid-row: 4">
+                <div class="explosion center"></div>
+            </div>
+
+            <!-- 🔥 Bottom (DOWN) -->
+            <div class="tile" style="grid-column: 4; grid-row: 5">
+                <div class="explosion vertical down"></div>
+            </div>
+
+            <!-- 🔥 Left -->
+            <div class="tile" style="grid-column: 3; grid-row: 4">
+                <div class="explosion horizontal left"></div>
+            </div>
+
+            <!-- 🔥 Right -->
+            <div class="tile" style="grid-column: 5; grid-row: 4">
+                <div class="explosion horizontal right"></div>
+            </div>
+        </div>
+
+        <script src="index.js" type="module"></script>
+    </body>
+</html>
