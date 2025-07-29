@@ -5,7 +5,7 @@ const initialState = {
   user: null,
   data: [],
   counter: 0,
-  nickname: null
+  nickname: null,
 };
 
 function update(state, msg) {
@@ -19,10 +19,10 @@ function update(state, msg) {
     case "DECREMENT":
       return { ...state, counter: state.counter - 1 };
     case "ROUTE_CHANGE":
-      return { 
-        ...state, 
+      return {
+        ...state,
         path: msg.path,
-        nickname: msg.nickname || state.nickname
+        nickname: msg.nickname || state.nickname,
       };
     default:
       return state;
@@ -34,15 +34,47 @@ function createMainView(state, routedContent) {
   return [
     {
       tag: "main",
-      children: [routedContent]
-    }
+      children: [routedContent],
+    },
   ];
 }
 
 // Initialize with routing
 const app = initWithRouting(
-  document.getElementById('app'),
+  document.getElementById("app"),
   initialState,
   update,
-  createMainView
+  createMainView,
 );
+
+function monitorBoardCell(row = 0, col = 0, onRectUpdate) {
+  const selector = `[data-row="${row}"][data-col="${col}"]`;
+
+  const observer = new MutationObserver((_, obs) => {
+    const cell = document.querySelector(selector);
+    if (cell) {
+      obs.disconnect();
+
+      const resizeObs = new ResizeObserver(() => {
+        onRectUpdate(cell.getBoundingClientRect());
+      });
+
+      resizeObs.observe(cell);
+      window.addEventListener("resize", () => {
+        onRectUpdate(cell.getBoundingClientRect());
+      });
+
+      // Initial call
+      onRectUpdate(cell.getBoundingClientRect());
+    }
+  });
+
+  observer.observe(document.body, { childList: true, subtree: true });
+}
+
+monitorBoardCell(0, 0, (rect) => {
+  console.log(
+    "Live rect for cell 0,0:, we will use this to get the board size for collisins",
+    rect,
+  );
+});
