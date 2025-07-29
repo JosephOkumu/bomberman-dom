@@ -5,12 +5,11 @@ export default (state) => {
   const currentPlayer = state.game?.players?.find(p => p.id === state.game?.currentPlayer) || state.game?.players?.[0];
   const allPlayers = state.game?.players || [];
   
-  // Use existing board or create new one - but store it immediately to prevent re-generation
+  // Use existing board or create new one
   let gameBoard;
   if (state.game?.board) {
     gameBoard = state.game.board;
   } else {
-    // Generate board immediately and trigger state update before rendering
     // Convert board string to 2D array - this should only happen once!
     const boardLines = state.board || `
    wwwwwwwwwwwwwwwwwwwwwwwwwwwwwww
@@ -154,11 +153,6 @@ export default (state) => {
 
     // Apply randomization to board - this should only happen once!
     gameBoard = randomizeBoard(boardLines);
-    
-    // Immediately update state with the new board to prevent regeneration
-    if (state.enqueue) {
-      state.enqueue({ type: "INIT_GAME_BOARD", board: gameBoard });
-    }
   }
 
   // Generate board HTML
@@ -230,7 +224,112 @@ export default (state) => {
       const message = e.target.closest('.chat-form').querySelector('#chat-input').value.trim();
       if (!message) return;
       // TODO: Send chat message to server
-    }  };
+    },
 
-  return domParser(htmlString, handlers);
+    focusGame: (e) => {
+      // Auto-focus the game screen when it loads
+      e.target.focus();
+    },
+
+    handleKeyDown: (e) => {
+      // Don't handle keys if typing in input fields
+      if (e.target.tagName === 'INPUT') return;
+      
+      if (!currentPlayer || !currentPlayer.active) return;
+      
+      let newX = currentPlayer.x;
+      let newY = currentPlayer.y;
+      let direction = currentPlayer.direction;
+      
+      // Handle movement keys
+      switch (e.key) {
+        case 'ArrowUp':
+        case 'w':
+        case 'W':
+          newY = currentPlayer.y - 1;
+          direction = 'up';
+          break;
+        case 'ArrowDown':
+        case 's':
+        case 'S':
+          newY = currentPlayer.y + 1;
+          direction = 'down';
+          break;
+        case 'ArrowLeft':
+        case 'a':
+        case 'A':
+          newX = currentPlayer.x - 1;
+          direction = 'left';
+          break;
+        case 'ArrowRight':
+        case 'd':
+        case 'D':
+          newX = currentPlayer.x + 1;
+          direction = 'right';
+          break;
+        default:
+          return; // Don't prevent default for other keys
+      }
+      
+      e.preventDefault();
+      
+      // Validate movement bounds and collision
+      if (newY >= 0 && newY < gameBoard.length && 
+          newX >= 0 && newX < gameBoard[0].length) {
+        const targetCell = gameBoard[newY][newX];
+        
+        // Check if target cell is walkable (path only)
+        if (targetCell === 'p') {
+          // Check if another player is already at this position
+          const playerAtPosition = allPlayers.find(p => 
+            p.active && p.id !== currentPlayer.id && p.x === newX && p.y === newY
+          );
+          
+          if (!playerAtPosition) {
+            return {
+              type: "MOVE_PLAYER",
+              playerId: currentPlayer.id,
+              x: newX,
+              y: newY,
+              direction: direction
+            };
+          }
+        }
+      }
+      
+      // If movement is blocked, just update direction
+      if (direction !== currentPlayer.direction) {
+        return {
+          type: "MOVE_PLAYER",
+          playerId: currentPlayer.id,
+          x: currentPlayer.x,
+          y: currentPlayer.y,
+          direction: direction
+        };
+      }
+    }
+  };
+
+  const result = domParser(htmlString, handlers);
+  
+  // If we just generated a new board, store it in state immediately
+  if (!state.game?.board && gameBoard) {
+    // Store the board in state synchronously using the enqueue function
+    setTimeout(() => {
+      const gameScreen = document.getElementById('game-screen');
+      if (gameScreen && gameScreen._ui && gameScreen._ui.enqueue) {
+        gameScreen._ui.enqueue({ type: "INIT_GAME_BOARD", board: gameBoard });
+      }
+    }, 0);
+  }
+  
+  // Auto-focus the game screen after it renders
+  setTimeout(() => {
+    const gameScreen = document.getElementById('game-screen');
+    if (gameScreen) {
+      gameScreen.focus();
+    }
+  }, 100);
+  
+  return result;
 }
