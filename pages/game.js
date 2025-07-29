@@ -5,11 +5,12 @@ export default (state) => {
   const currentPlayer = state.game?.players?.find(p => p.id === state.game?.currentPlayer) || state.game?.players?.[0];
   const allPlayers = state.game?.players || [];
   
-  // Use existing board or create new one
+  // Use existing board or create new one - but store it immediately to prevent re-generation
   let gameBoard;
   if (state.game?.board) {
     gameBoard = state.game.board;
   } else {
+    // Generate board immediately and trigger state update before rendering
     // Convert board string to 2D array - this should only happen once!
     const boardLines = state.board || `
    wwwwwwwwwwwwwwwwwwwwwwwwwwwwwww
@@ -153,6 +154,11 @@ export default (state) => {
 
     // Apply randomization to board - this should only happen once!
     gameBoard = randomizeBoard(boardLines);
+    
+    // Immediately update state with the new board to prevent regeneration
+    if (state.enqueue) {
+      state.enqueue({ type: "INIT_GAME_BOARD", board: gameBoard });
+    }
   }
 
   // Generate board HTML
@@ -273,10 +279,13 @@ export default (state) => {
       
       e.preventDefault();
       
-      // Validate movement bounds and collision
-      if (newY >= 0 && newY < gameBoard.length && 
-          newX >= 0 && newX < gameBoard[0].length) {
-        const targetCell = gameBoard[newY][newX];
+      // Get the current board (use stored board from state)
+      const currentBoard = state.game.board || gameBoard;
+      
+      // Check if the new position is valid (not a wall and within bounds)
+      if (newY >= 0 && newY < currentBoard.length && 
+          newX >= 0 && newX < currentBoard[0].length) {
+        const targetCell = currentBoard[newY][newX];
         
         // Check if target cell is walkable (path only)
         if (targetCell === 'p') {
@@ -311,17 +320,6 @@ export default (state) => {
   };
 
   const result = domParser(htmlString, handlers);
-  
-  // If we just generated a new board, store it in state immediately
-  if (!state.game?.board && gameBoard) {
-    // Store the board in state synchronously using the enqueue function
-    setTimeout(() => {
-      const gameScreen = document.getElementById('game-screen');
-      if (gameScreen && gameScreen._ui && gameScreen._ui.enqueue) {
-        gameScreen._ui.enqueue({ type: "INIT_GAME_BOARD", board: gameBoard });
-      }
-    }, 0);
-  }
   
   // Auto-focus the game screen after it renders
   setTimeout(() => {
