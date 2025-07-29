@@ -1,4 +1,5 @@
 import domParser from "../MiniMvc/domParser.js";
+import createKeyboardHandler from "../utils/movement.js";
 
 export default (state) => {
   // Get current player and game state
