@@ -247,7 +247,7 @@ button:disabled {
 
 /* Classic Bomberman Brick Walls - Dark Theme with Texture */
 .board-cell.wall {
-    background: url('brick-wall.png') repeat;
+    background: url('assets/brick-wall.png') repeat;
     background-size: cover;
     border: 1px solid #1a1410;
     position: relative;
@@ -568,7 +568,7 @@ button:disabled {
 
 /* Temporary/Destructible Walls - Classic Bomberman Style */
 .board-cell.temp-wall {
-    background: url('solid-wall.png') repeat;
+    background: url('assets/solid-wall.png') repeat;
     background-size: cover;
     border: 1px solid #2a1f1a;
     position: relative;
