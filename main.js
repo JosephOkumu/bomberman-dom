@@ -1,5 +1,6 @@
 import initWithRouting from "./MiniMvc/routingInit.js";
 import { createRouteLink } from "./MiniMvc/routeUtils.js";
+import { BoardGeometry } from "./game-logic/Board.js";
 
 const initialState = {
   user: null,
@@ -47,34 +48,39 @@ const app = initWithRouting(
   createMainView,
 );
 
-function monitorBoardCell(row = 0, col = 0, onRectUpdate) {
-  const selector = `[data-row="${row}"][data-col="${col}"]`;
+// function monitorBoardCell(row = 0, col = 0, onRectUpdate) {
+//   const selector = `[data-row="0"][data-col="0"]`;
 
-  const observer = new MutationObserver((_, obs) => {
-    const cell = document.querySelector(selector);
-    if (cell) {
-      obs.disconnect();
+//   const observer = new MutationObserver((_, obs) => {
+//     const cell = document.querySelector(selector);
+//     if (cell) {
+//       obs.disconnect();
 
-      const resizeObs = new ResizeObserver(() => {
-        onRectUpdate(cell.getBoundingClientRect());
-      });
+//       const resizeObs = new ResizeObserver(() => {
+//         onRectUpdate(cell.getBoundingClientRect());
+//       });
 
-      resizeObs.observe(cell);
-      window.addEventListener("resize", () => {
-        onRectUpdate(cell.getBoundingClientRect());
-      });
+//       resizeObs.observe(cell);
+//       window.addEventListener("resize", () => {
+//         onRectUpdate(cell.getBoundingClientRect());
+//       });
 
-      // Initial call
-      onRectUpdate(cell.getBoundingClientRect());
-    }
-  });
+//       // Initial call
+//       onRectUpdate(cell.getBoundingClientRect());
+//     }
+//   });
 
-  observer.observe(document.body, { childList: true, subtree: true });
-}
+//   observer.observe(document.body, { childList: true, subtree: true });
+// }
 
-monitorBoardCell(0, 0, (rect) => {
-  console.log(
-    "Live rect for cell 0,0:, we will use this to get the board size for collisins",
-    rect,
-  );
+// monitorBoardCell(0, 0, (rect) => {
+//   console.log(
+//     "Live rect for cell 0,0:, we will use this to get the board size for collisins",
+//     rect,
+//   );
+// });
+
+BoardGeometry.init({
+  rows: 12,
+  cols: 30,
 });
