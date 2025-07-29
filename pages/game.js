@@ -155,7 +155,13 @@ export default (state) => {
           else if (cell === 't') cellClass += 'temp-wall';
           else cellClass += 'path';
           
-          return `<div class="${cellClass}" data-row="${rowIndex}" data-col="${colIndex}"></div>`;
+          // Add player sprite in top-left corner (row 1, col 1)
+          const playerSprite = (rowIndex === 1 && colIndex === 1) ? 
+            '<div class="player-sprite"></div>' : '';
+          
+          return `<div class="${cellClass}" data-row="${rowIndex}" data-col="${colIndex}">
+            ${playerSprite}
+          </div>`;
         }).join('')}
       </div>`
     ).join('');
