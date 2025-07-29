@@ -1,8 +1,18 @@
 import domParser from "../MiniMvc/domParser.js";
 
 export default (state) => {
-  // Convert board string to 2D array
-  const boardLines = state.board || `
+  // Get current player and game state
+  const currentPlayer = state.game?.players?.find(p => p.id === state.game?.currentPlayer) || state.game?.players?.[0];
+  const allPlayers = state.game?.players || [];
+  
+  // Use existing board or create new one - but store it immediately to prevent re-generation
+  let gameBoard;
+  if (state.game?.board) {
+    gameBoard = state.game.board;
+  } else {
+    // Generate board immediately and trigger state update before rendering
+    // Convert board string to 2D array - this should only happen once!
+    const boardLines = state.board || `
    wwwwwwwwwwwwwwwwwwwwwwwwwwwwwww
    wpppppppppppppppppppppppppppppw
    wpwpwpwpwpwpwpwpwpwpwpwpwpwpwpw
@@ -142,12 +152,18 @@ export default (state) => {
     return fallbackBoard.map(row => row.join(''));
   };
 
-  // Apply randomization to board
-  const randomizedBoard = randomizeBoard(boardLines);
+    // Apply randomization to board - this should only happen once!
+    gameBoard = randomizeBoard(boardLines);
+    
+    // Immediately update state with the new board to prevent regeneration
+    if (state.enqueue) {
+      state.enqueue({ type: "INIT_GAME_BOARD", board: gameBoard });
+    }
+  }
 
   // Generate board HTML
   const generateBoardHTML = () => {
-    return randomizedBoard.map((row, rowIndex) => 
+    return gameBoard.map((row, rowIndex) => 
       `<div class="board-row" data-row="${rowIndex}">
         ${row.split('').map((cell, colIndex) => {
           let cellClass = 'board-cell ';
@@ -155,12 +171,14 @@ export default (state) => {
           else if (cell === 't') cellClass += 'temp-wall';
           else cellClass += 'path';
           
-          // Add player sprite in top-left corner (row 1, col 1)
-          const playerSprite = (rowIndex === 1 && colIndex === 1) ? 
-            '<div class="player-sprite"></div>' : '';
+          // Add player sprites at their positions
+          const playersAtPosition = allPlayers.filter(p => p.active && p.x === colIndex && p.y === rowIndex);
+          const playerSprites = playersAtPosition.map(player => 
+            `<div class="player-sprite player-${player.id}" data-direction="${player.direction}"></div>`
+          ).join('');
           
           return `<div class="${cellClass}" data-row="${rowIndex}" data-col="${colIndex}">
-            ${playerSprite}
+            ${playerSprites}
           </div>`;
         }).join('')}
       </div>`
@@ -168,7 +186,7 @@ export default (state) => {
   };
 
   const htmlString = `
-    <section id="game-screen" class="screen">
+    <section id="game-screen" class="screen" onkeydown="handleKeyDown" tabindex="0" onfocus="focusGame">
         <div class="game-layout">
             <div class="game-area">
                 <div id="game-overlay" class="game-overlay">
@@ -212,8 +230,7 @@ export default (state) => {
       const message = e.target.closest('.chat-form').querySelector('#chat-input').value.trim();
       if (!message) return;
       // TODO: Send chat message to server
-    }
-  };
+    }  };
 
   return domParser(htmlString, handlers);
 }
