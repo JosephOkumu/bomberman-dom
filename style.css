@@ -592,7 +592,7 @@ button:disabled {
     left: 0;
     width: 100%;
     height: 100%;
-    background-image: url('assets/B2/walkingright.png');
+    background-image: url('assets/B2/walkingdown.png');
     background-size: 300% 100%; /* Scale to show all 3 frames, but we'll position to first */
     background-repeat: no-repeat;
     background-position: 0 0; /* Show only the first frame (leftmost) */
