@@ -170,6 +170,7 @@ export default (state) => {
                 </div>
                 <div id="game-board" class="game-board">
                     ${generateBoardHTML()}
+                    <div id="players-layer" class="players-layer"></div>
                 </div>
                 <canvas id="game-canvas" style="display: none;"></canvas>
             </div>
