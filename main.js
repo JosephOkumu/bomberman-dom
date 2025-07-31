@@ -48,39 +48,29 @@ const app = initWithRouting(
   createMainView,
 );
 
-// function monitorBoardCell(row = 0, col = 0, onRectUpdate) {
-//   const selector = `[data-row="0"][data-col="0"]`;
-
-//   const observer = new MutationObserver((_, obs) => {
-//     const cell = document.querySelector(selector);
-//     if (cell) {
-//       obs.disconnect();
-
-//       const resizeObs = new ResizeObserver(() => {
-//         onRectUpdate(cell.getBoundingClientRect());
-//       });
-
-//       resizeObs.observe(cell);
-//       window.addEventListener("resize", () => {
-//         onRectUpdate(cell.getBoundingClientRect());
-//       });
-
-//       // Initial call
-//       onRectUpdate(cell.getBoundingClientRect());
-//     }
-//   });
-
-//   observer.observe(document.body, { childList: true, subtree: true });
-// }
-
-// monitorBoardCell(0, 0, (rect) => {
-//   console.log(
-//     "Live rect for cell 0,0:, we will use this to get the board size for collisins",
-//     rect,
-//   );
-// });
-
 BoardGeometry.init({
   rows: 12,
   cols: 30,
 });
+
+// new function to place players
+//
+// pass a call back function that uses state to place the players into the board
+function placePlayers(players) {
+  const layer = document.getElementById("players-layer");
+  if (!layer) return;
+
+  layer.innerHTML = ""; // Clear previous
+
+  for (const player of players) {
+    const avatar = document.createElement("div");
+    avatar.className = "player-avatar";
+    avatar.dataset.id = player.id;
+
+    const pos = BoardGeometry.getPixelPositionFromGrid(player.row, player.col);
+    if (!pos) continue;
+
+    avatar.style.transform = `translate(${pos.left + pos.width / 2}px, ${pos.top + pos.height / 2}px)`;
+    layer.appendChild(avatar);
+  }
+}
