@@ -1,14 +1,14 @@
 :root {
-    --bg-dark: #1E2041;
+    --bg-dark: #1e2041;
     --bg-light: #2a2d5a;
-    --primary: #40C5AF;
+    --primary: #40c5af;
     --primary-dark: #35a895;
-    --secondary: #FFC857;
-    --accent: #E53D00;
-    --text-light: #F4F4F8;
+    --secondary: #ffc857;
+    --accent: #e53d00;
+    --text-light: #f4f4f8;
     --text-dark: #a8aacc;
-    --font-primary: 'Inter', sans-serif;
-    --font-display: 'Press Start 2P', cursive;
+    --font-primary: "Inter", sans-serif;
+    --font-display: "Press Start 2P", cursive;
     --border-radius: 8px;
     --shadow: 0 4px 6px rgba(0, 0, 0, 0.2);
     --border: 2px solid var(--secondary);
@@ -45,7 +45,6 @@ main {
     padding: 1rem;
     flex-direction: column;
 }
-
 
 .card {
     background: var(--bg-light);
@@ -247,11 +246,11 @@ button:disabled {
 
 /* Classic Bomberman Brick Walls - Dark Theme with Texture */
 .board-cell.wall {
-    background: url('assets/brick-wall.png') repeat;
+    background: url("assets/brick-wall.png") repeat;
     background-size: cover;
     border: 1px solid #1a1410;
     position: relative;
-    box-shadow: 
+    box-shadow:
         inset 2px 2px 4px rgba(255, 200, 150, 0.1),
         inset -2px -2px 4px rgba(0, 0, 0, 0.6),
         0 2px 4px rgba(0, 0, 0, 0.4);
@@ -268,10 +267,18 @@ button:disabled {
 
 /* Classic Bomberman Floor Tiles - Dark Theme */
 .board-cell.path {
-    background: linear-gradient(45deg, #3a3f5a 25%, #2f3449 25%, #2f3449 50%, #3a3f5a 50%, #3a3f5a 75%, #2f3449 75%);
+    background: linear-gradient(
+        45deg,
+        #3a3f5a 25%,
+        #2f3449 25%,
+        #2f3449 50%,
+        #3a3f5a 50%,
+        #3a3f5a 75%,
+        #2f3449 75%
+    );
     background-size: 4px 4px;
     border: 1px solid #1e2238;
-    box-shadow: 
+    box-shadow:
         inset 1px 1px 2px rgba(64, 197, 175, 0.05),
         inset -1px -1px 2px rgba(0, 0, 0, 0.3);
     position: relative;
@@ -279,13 +286,13 @@ button:disabled {
 
 /* Floor tile grid lines - Dark Theme */
 .board-cell.path::before {
-    content: '';
+    content: "";
     position: absolute;
     top: 0;
     left: 0;
     right: 0;
     bottom: 0;
-    background-image: 
+    background-image:
         linear-gradient(90deg, rgba(30, 34, 56, 0.4) 1px, transparent 1px),
         linear-gradient(180deg, rgba(30, 34, 56, 0.4) 1px, transparent 1px);
     background-size: 100% 100%;
@@ -294,7 +301,7 @@ button:disabled {
 
 /* Subtle floor depth - Dark Theme */
 .board-cell.path::after {
-    content: '';
+    content: "";
     position: absolute;
     bottom: 0;
     left: 0;
@@ -330,19 +337,19 @@ button:disabled {
         width: 98%;
         height: 75%;
     }
-    
+
     .board-cell {
         border-width: 0.5px;
     }
-    
+
     .board-cell.wall::before {
         background-size: 6px 3px;
     }
-    
+
     .board-cell.path {
         background-size: 3px 3px;
     }
-    
+
     .game-area {
         padding: 0.25rem;
     }
@@ -354,20 +361,20 @@ button:disabled {
         height: 70%;
         border-width: 1px;
     }
-    
+
     .board-cell.wall::before,
     .board-cell.wall::after {
         display: none;
     }
-    
+
     .board-cell.path::before {
         display: none;
     }
-    
+
     .board-cell.path {
         background-size: 2px 2px;
     }
-    
+
     .game-area {
         padding: 0.125rem;
     }
@@ -509,13 +516,12 @@ button:disabled {
     display: none;
 }
 
-
 /* Responsive Design */
 @media (max-width: 900px) {
     .game-layout {
         grid-template-columns: 1fr;
     }
-    
+
     #sidebar {
         position: fixed;
         right: 0;
@@ -536,7 +542,7 @@ button:disabled {
     #sidebar.open {
         transform: translateX(0);
     }
-    
+
     #sidebar-toggle-btn {
         display: block;
         position: fixed;
@@ -568,11 +574,11 @@ button:disabled {
 
 /* Temporary/Destructible Walls - Classic Bomberman Style */
 .board-cell.temp-wall {
-    background: url('assets/solid-wall.png') repeat;
+    background: url("assets/solid-wall.png") repeat;
     background-size: cover;
     border: 1px solid #2a1f1a;
     position: relative;
-    box-shadow: 
+    box-shadow:
         inset 1px 1px 3px rgba(255, 180, 120, 0.15),
         inset -1px -1px 3px rgba(0, 0, 0, 0.5),
         0 1px 3px rgba(0, 0, 0, 0.3);
