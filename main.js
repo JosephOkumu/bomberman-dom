@@ -7,6 +7,12 @@ const initialState = {
   data: [],
   counter: 0,
   nickname: null,
+  players: [
+    { id: 1, x: 1, y: 1, direction: "down", lives: 3, active: true },
+    { id: 2, x: 29, y: 1, direction: "down", lives: 3, active: false },
+    { id: 3, x: 1, y: 11, direction: "down", lives: 3, active: false },
+    { id: 4, x: 29, y: 11, direction: "down", lives: 3, active: false },
+  ],
 };
 
 function update(state, msg) {
@@ -74,3 +80,15 @@ function placePlayers(players) {
     layer.appendChild(avatar);
   }
 }
+
+const playersAtPosition = allPlayers.filter((p) => p.active);
+const playerSprites = playersAtPosition
+  .map(
+    (player) =>
+      `<div class="player-sprite player-${player.id}" data-direction="${player.direction}"></div>`,
+  )
+  .join("");
+
+return `<div class="${cellClass}" data-row="${rowIndex}" data-col="${colIndex}">
+                ${playerSprites}
+              </div>`;
