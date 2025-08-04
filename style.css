@@ -247,7 +247,7 @@ button:disabled {
 
 /* Classic Bomberman Brick Walls - Dark Theme with Texture */
 .board-cell.wall {
-    background: url('brick-wall.png') repeat;
+    background: url('assets/brick-wall.png') repeat;
     background-size: cover;
     border: 1px solid #1a1410;
     position: relative;
@@ -568,7 +568,7 @@ button:disabled {
 
 /* Temporary/Destructible Walls - Classic Bomberman Style */
 .board-cell.temp-wall {
-    background: url('solid-wall.png') repeat;
+    background: url('assets/solid-wall.png') repeat;
     background-size: cover;
     border: 1px solid #2a1f1a;
     position: relative;
@@ -584,5 +584,88 @@ button:disabled {
 
 .board-cell.temp-wall::after {
     display: none;
+}
+
+
+.player-sprite {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-size: 300% 100%; /* Scale to show all 3 frames, but we'll position to first */
+    background-repeat: no-repeat;
+    background-position: 0 0; /* Show only the first frame (leftmost) */
+    z-index: 10;
+}
+
+/* Player 1 - B1 sprites */
+.player-sprite.player-1[data-direction="up"] {
+    background-image: url('assets/B1/b1walkingup.png');
+}
+.player-sprite.player-1[data-direction="down"] {
+    background-image: url('assets/B1/b1walkDown.png');
+}
+.player-sprite.player-1[data-direction="left"] {
+    background-image: url('assets/B1/b1walkingleft.png');
+}
+.player-sprite.player-1[data-direction="right"] {
+    background-image: url('assets/B1/b1walkingright.png');
+}
+
+/* Player 2 - B2 sprites */
+.player-sprite.player-2[data-direction="up"] {
+    background-image: url('assets/B2/wakingup.png');
+}
+.player-sprite.player-2[data-direction="down"] {
+    background-image: url('assets/B2/walkingdown.png');
+}
+.player-sprite.player-2[data-direction="left"] {
+    background-image: url('assets/B2/walkingleft.png');
+}
+.player-sprite.player-2[data-direction="right"] {
+    background-image: url('assets/B2/walkingright.png');
+}
+
+/* Player 3 - B3 sprites */
+.player-sprite.player-3[data-direction="up"] {
+    background-image: url('assets/B3/up.png');
+}
+.player-sprite.player-3[data-direction="down"] {
+    background-image: url('assets/B3/down.png');
+}
+.player-sprite.player-3[data-direction="left"] {
+    background-image: url('assets/B3/left.png');
+}
+.player-sprite.player-3[data-direction="right"] {
+    background-image: url('assets/B3/right.png');
+}
+
+/* Player 4 - B4 sprites */
+.player-sprite.player-4[data-direction="up"] {
+    background-image: url('assets/B4/up.png');
+}
+.player-sprite.player-4[data-direction="down"] {
+    background-image: url('assets/B4/down.png');
+}
+.player-sprite.player-4[data-direction="left"] {
+    background-image: url('assets/B4/left.png');
+}
+.player-sprite.player-4[data-direction="right"] {
+    background-image: url('assets/B4/right.png');
+}
+
+/* Default fallback for player sprites */
+.player-sprite:not([data-direction]) {
+    background-image: url('assets/B1/b1walkDown.png');
+}
+
+.board-cell {
+    flex: 1;
+    aspect-ratio: 1;
+    position: relative;
+    border: 1px solid rgba(0, 0, 0, 0.3);
+    box-sizing: border-box;
+    min-width: 0;
 }
 

@@ -1,0 +1,88 @@
+.animatedSprite {
+    width: 64px;
+    height: 64px;
+    background-image: url("/B2/walkingright.png");
+    animation: 0.5s steps(3) infinite sprite-animation;
+}
+
+@keyframes sprite-animation {
+    0% {
+        background-position-x: 192px;
+    }
+    100% {
+        background-position-x: 0px;
+    }
+}
+
+body {
+    background: #111;
+    margin: 0;
+}
+
+.grid {
+    display: grid;
+    grid-template-columns: repeat(7, 20px);
+    grid-template-rows: repeat(7, 20px);
+    width: calc(20px * 7);
+    height: calc(20px * 7);
+    margin: 20px auto;
+    position: relative;
+}
+
+.tile {
+    width: 20px;
+    height: 20px;
+    position: relative;
+    overflow: hidden;
+}
+
+.explosion {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 20px; /* The container for the scaled sprite */
+    height: 20px; /* The container for the scaled sprite */
+    background-image: url("BomberManEffect.png");
+    background-repeat: no-repeat;
+    /* This scales the *entire background image* (the sprite sheet) to the new dimensions */
+    background-size: 140px 60px; /* (Original_width * scale_factor) (Original_height * scale_factor) */
+    image-rendering: pixelated; /* Crucial for sharp pixel art scaling */
+    animation: explode 0.8s steps(7) infinite;
+    transform-origin: center center;
+}
+
+/* Center flame */
+.center {
+    background-position-y: 0px; /* First row */
+}
+
+/* Horizontal flames: use row 2 */
+.horizontal {
+    /* Original row was at 48px. New row position is -20px. */
+    background-position-y: -20px;
+}
+
+/* Vertical flames: use row 3 */
+.vertical {
+    /* Original row was at 96px. New row position is -40px. */
+    background-position-y: -40px;
+}
+
+.vertical.up {
+    transform: rotate(270deg);
+}
+
+.vertical.down {
+    transform: rotate(90deg);
+}
+
+@keyframes explode {
+    from {
+        background-position-x: 0;
+    }
+    to {
+        /* Original frame width was 48px. New frame width is 20px.
+           For 7 frames (0-6), total shift is 6 * 20px = 120px */
+        background-position-x: calc(-20px * 7);
+    }
+}

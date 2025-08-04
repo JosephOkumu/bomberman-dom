@@ -1,8 +1,19 @@
 import domParser from "../MiniMvc/domParser.js";
+import createKeyboardHandler from "../utils/movement.js";
 
 export default (state) => {
-  // Convert board string to 2D array
-  const boardLines = state.board || `
+  // Get current player and game state
+  const currentPlayer = state.game?.players?.find(p => p.id === state.game?.currentPlayer) || state.game?.players?.[0];
+  const allPlayers = state.game?.players || [];
+  
+  // Use existing board or create new one - but store it immediately to prevent re-generation
+  let gameBoard;
+  if (state.game?.board) {
+    gameBoard = state.game.board;
+  } else {
+    // Generate board immediately and trigger state update before rendering
+    // Convert board string to 2D array - this should only happen once!
+    const boardLines = state.board || `
    wwwwwwwwwwwwwwwwwwwwwwwwwwwwwww
    wpppppppppppppppppppppppppppppw
    wpwpwpwpwpwpwpwpwpwpwpwpwpwpwpw
@@ -18,136 +29,142 @@ export default (state) => {
    wwwwwwwwwwwwwwwwwwwwwwwwwwwwwww
   `.trim().split('\n').map(line => line.trim());
 
-  // Board randomization function with enhanced spawn protection and connectivity
-  const randomizeBoard = (board) => {
-    const rows = board.length;
-    const cols = board[0].length;
-    const maxRetries = 10;
-    
-    // Define enhanced 3x3 spawn protection zones
-    const getprtectedCells = () => {
-      const prtected = new Set();
+    // Board randomization function with enhanced spawn protection and connectivity
+    const randomizeBoard = (board) => {
+      const rows = board.length;
+      const cols = board[0].length;
+      const maxRetries = 10;
       
-      // Top-left 3x3 (spawn at 1,1)
-      for (let r = 1; r <= 3; r++) {
-        for (let c = 1; c <= 3; c++) {
-          prtected.add(`${r},${c}`);
-        }
-      }
-      
-      // Top-right 3x3 (spawn at 1,cols-2)
-      for (let r = 1; r <= 3; r++) {
-        for (let c = cols-4; c <= cols-2; c++) {
-          prtected.add(`${r},${c}`);
-        }
-      }
-      
-      // Bottom-left 3x3 (spawn at rows-2,1)
-      for (let r = rows-4; r <= rows-2; r++) {
-        for (let c = 1; c <= 3; c++) {
-          prtected.add(`${r},${c}`);
-        }
-      }
-      
-      // Bottom-right 3x3 (spawn at rows-2,cols-2)
-      for (let r = rows-4; r <= rows-2; r++) {
-        for (let c = cols-4; c <= cols-2; c++) {
-          prtected.add(`${r},${c}`);
-        }
-      }
-      
-      return prtected;
-    };
-    
-    // Flood fill to check connectivity
-    const isConnected = (testBoard) => {
-      const visited = new Set();
-      const queue = [];
-      
-      // Start from top-left spawn point
-      const startRow = 1, startCol = 1;
-      if (testBoard[startRow][startCol] !== 'p') return false;
-      
-      queue.push([startRow, startCol]);
-      visited.add(`${startRow},${startCol}`);
-      
-      const directions = [[0,1], [0,-1], [1,0], [-1,0]];
-      
-      while (queue.length > 0) {
-        const [row, col] = queue.shift();
+      // Define enhanced 3x3 spawn protection zones
+      const getprtectedCells = () => {
+        const prtected = new Set();
         
-        for (const [dr, dc] of directions) {
-          const newRow = row + dr;
-          const newCol = col + dc;
-          const key = `${newRow},${newCol}`;
-          
-          if (newRow >= 0 && newRow < rows && 
-              newCol >= 0 && newCol < cols &&
-              !visited.has(key) && 
-              testBoard[newRow][newCol] === 'p') {
-            visited.add(key);
-            queue.push([newRow, newCol]);
+        // Top-left 3x3 (spawn at 1,1)
+        for (let r = 1; r <= 3; r++) {
+          for (let c = 1; c <= 3; c++) {
+            prtected.add(`${r},${c}`);
           }
         }
+        
+        // Top-right 3x3 (spawn at 1,cols-2)
+        for (let r = 1; r <= 3; r++) {
+          for (let c = cols-4; c <= cols-2; c++) {
+            prtected.add(`${r},${c}`);
+          }
+        }
+        
+        // Bottom-left 3x3 (spawn at rows-2,1)
+        for (let r = rows-4; r <= rows-2; r++) {
+          for (let c = 1; c <= 3; c++) {
+            prtected.add(`${r},${c}`);
+          }
+        }
+        
+        // Bottom-right 3x3 (spawn at rows-2,cols-2)
+        for (let r = rows-4; r <= rows-2; r++) {
+          for (let c = cols-4; c <= cols-2; c++) {
+            prtected.add(`${r},${c}`);
+          }
+        }
+        
+        return prtected;
+      };
+      
+      // Flood fill to check connectivity
+      const isConnected = (testBoard) => {
+        const visited = new Set();
+        const queue = [];
+        
+        // Start from top-left spawn point
+        const startRow = 1, startCol = 1;
+        if (testBoard[startRow][startCol] !== 'p') return false;
+        
+        queue.push([startRow, startCol]);
+        visited.add(`${startRow},${startCol}`);
+        
+        const directions = [[0,1], [0,-1], [1,0], [-1,0]];
+        
+        while (queue.length > 0) {
+          const [row, col] = queue.shift();
+          
+          for (const [dr, dc] of directions) {
+            const newRow = row + dr;
+            const newCol = col + dc;
+            const key = `${newRow},${newCol}`;
+            
+            if (newRow >= 0 && newRow < rows && 
+                newCol >= 0 && newCol < cols &&
+                !visited.has(key) && 
+                testBoard[newRow][newCol] === 'p') {
+              visited.add(key);
+              queue.push([newRow, newCol]);
+            }
+          }
+        }
+        
+        // Check if all spawn points are reachable
+        const spawnPoints = [
+          [1, 1], [1, cols-2], [rows-2, 1], [rows-2, cols-2]
+        ];
+        
+        return spawnPoints.every(([r, c]) => 
+          testBoard[r][c] === 'p' && visited.has(`${r},${c}`)
+        );
+      };
+      
+      // Generate valid randomized board
+      const prtectedCells = getprtectedCells();
+      
+      for (let attempt = 0; attempt < maxRetries; attempt++) {
+        const testBoard = board.map(row => row.split(''));
+        
+        // Place temporary walls with 65% probability
+        for (let row = 1; row < rows - 1; row++) {
+          for (let col = 1; col < cols - 1; col++) {
+            const cellKey = `${row},${col}`;
+            
+            if (testBoard[row][col] === 'p' && !prtectedCells.has(cellKey)) {
+              if (Math.random() < 0.65) {
+                testBoard[row][col] = 't';
+              }
+            }
+          }
+        }
+        
+        // Verify connectivity
+        if (isConnected(testBoard)) {
+          return testBoard.map(row => row.join(''));
+        }
       }
       
-      // Check if all spawn points are reachable
-      const spawnPoints = [
-        [1, 1], [1, cols-2], [rows-2, 1], [rows-2, cols-2]
-      ];
-      
-      return spawnPoints.every(([r, c]) => 
-        testBoard[r][c] === 'p' && visited.has(`${r},${c}`)
-      );
-    };
-    
-    // Generate valid randomized board
-    const prtectedCells = getprtectedCells();
-    
-    for (let attempt = 0; attempt < maxRetries; attempt++) {
-      const testBoard = board.map(row => row.split(''));
-      
-      // Place temporary walls with 65% probability
+      // Fallback: return board with minimal walls if connectivity fails
+      const fallbackBoard = board.map(row => row.split(''));
       for (let row = 1; row < rows - 1; row++) {
         for (let col = 1; col < cols - 1; col++) {
           const cellKey = `${row},${col}`;
-          
-          if (testBoard[row][col] === 'p' && !prtectedCells.has(cellKey)) {
-            if (Math.random() < 0.65) {
-              testBoard[row][col] = 't';
+          if (fallbackBoard[row][col] === 'p' && !prtectedCells.has(cellKey)) {
+            if (Math.random() < 0.3) { // Reduced probability for fallback
+              fallbackBoard[row][col] = 't';
             }
           }
         }
       }
       
-      // Verify connectivity
-      if (isConnected(testBoard)) {
-        return testBoard.map(row => row.join(''));
-      }
-    }
-    
-    // Fallback: return board with minimal walls if connectivity fails
-    const fallbackBoard = board.map(row => row.split(''));
-    for (let row = 1; row < rows - 1; row++) {
-      for (let col = 1; col < cols - 1; col++) {
-        const cellKey = `${row},${col}`;
-        if (fallbackBoard[row][col] === 'p' && !prtectedCells.has(cellKey)) {
-          if (Math.random() < 0.3) { // Reduced probability for fallback
-            fallbackBoard[row][col] = 't';
-          }
-        }
-      }
-    }
-    
-    return fallbackBoard.map(row => row.join(''));
-  };
+      return fallbackBoard.map(row => row.join(''));
+    };
 
-  // Apply randomization to board
-  const randomizedBoard = randomizeBoard(boardLines);
+    // Apply randomization to board - this should only happen once!
+    gameBoard = randomizeBoard(boardLines);
+    
+    // Immediately update state with the new board to prevent regeneration
+    if (state.enqueue) {
+      state.enqueue({ type: "INIT_GAME_BOARD", board: gameBoard });
+    }
+  }
 
   // Generate board HTML
   const generateBoardHTML = () => {
-    return randomizedBoard.map((row, rowIndex) => 
+    return gameBoard.map((row, rowIndex) => 
       `<div class="board-row" data-row="${rowIndex}">
         ${row.split('').map((cell, colIndex) => {
           let cellClass = 'board-cell ';
@@ -155,14 +172,22 @@ export default (state) => {
           else if (cell === 't') cellClass += 'temp-wall';
           else cellClass += 'path';
           
-          return `<div class="${cellClass}" data-row="${rowIndex}" data-col="${colIndex}"></div>`;
+          // Add player sprites at their positions
+          const playersAtPosition = allPlayers.filter(p => p.active && p.x === colIndex && p.y === rowIndex);
+          const playerSprites = playersAtPosition.map(player => 
+            `<div class="player-sprite player-${player.id}" data-direction="${player.direction}"></div>`
+          ).join('');
+          
+          return `<div class="${cellClass}" data-row="${rowIndex}" data-col="${colIndex}">
+            ${playerSprites}
+          </div>`;
         }).join('')}
       </div>`
     ).join('');
   };
 
   const htmlString = `
-    <section id="game-screen" class="screen">
+    <section id="game-screen" class="screen" onkeydown="handleKeyDown" tabindex="0" onfocus="focusGame">
         <div class="game-layout">
             <div class="game-area">
                 <div id="game-overlay" class="game-overlay">
@@ -195,6 +220,9 @@ export default (state) => {
     </section>
   `;
 
+  // Create the keyboard handler using the imported function
+  const keyboardHandler = createKeyboardHandler(currentPlayer, allPlayers, state, gameBoard);
+
   const handlers = {
     toggleSidebar: (e) => {
       e.preventDefault();
@@ -206,8 +234,27 @@ export default (state) => {
       const message = e.target.closest('.chat-form').querySelector('#chat-input').value.trim();
       if (!message) return;
       // TODO: Send chat message to server
+    },
+
+    focusGame: (e) => {
+      // Auto-focus the game screen when it loads
+      e.target.focus();
+    },
+
+    handleKeyDown: (e) => {
+      return keyboardHandler(e);
     }
   };
 
-  return domParser(htmlString, handlers);
+  const result = domParser(htmlString, handlers);
+  
+  // Auto-focus the game screen after it renders
+  setTimeout(() => {
+    const gameScreen = document.getElementById('game-screen');
+    if (gameScreen) {
+      gameScreen.focus();
+    }
+  }, 100);
+  
+  return result;
 }
