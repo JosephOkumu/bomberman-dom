@@ -27,7 +27,7 @@ export default (state) => {
       
       const path = "/waiting";
       window.history.pushState({}, "", path);
-      return { type: "ROUTE_CHANGE", path, nickname };
+      return { type: "JOIN_AND_NAVIGATE", path, nickname };
     }
   }
 
