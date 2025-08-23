@@ -2,75 +2,40 @@ import initWithRouting from "./MiniMvc/routingInit.js";
 import { createRouteLink } from "./MiniMvc/routeUtils.js";
 
 const initialState = {
-  user: null,
-  data: [],
-  counter: 0,
+  path: '/',
   nickname: null,
+  waitingPlayers: [],
+  availableAvatars: [],
   game: {
     board: null,
-    players: [
-      { id: 1, x: 1, y: 1, direction: 'down', lives: 3, active: true },
-      { id: 2, x: 29, y: 1, direction: 'down', lives: 3, active: false },
-      { id: 3, x: 1, y: 11, direction: 'down', lives: 3, active: false },
-      { id: 4, x: 29, y: 11, direction: 'down', lives: 3, active: false }
-    ],
-    currentPlayer: 1
+    players: [],
+    currentPlayer: null
+  },
+  currentPlayerId: null
+};
+
+const ws = new WebSocket('ws://localhost:8080');
+
+ws.onopen = () => {
+  console.log('Connected to WebSocket server');
+};
+
+ws.onmessage = event => {
+  const { type, state, currentPlayerId } = JSON.parse(event.data);
+  if (type === 'UPDATE_STATE') {
+    app.enqueue({ type: 'STATE_UPDATE', state, currentPlayerId });
   }
 };
 
 function update(state, msg) {
   switch (msg.type) {
-    case "USER_LOGIN":
-      return { ...state, user: msg.user };
-    case "LOAD_DATA":
-      return { ...state, data: msg.data };
-    case "INCREMENT":
-      return { ...state, counter: state.counter + 1 };
-    case "DECREMENT":
-      return { ...state, counter: state.counter - 1 };
     case "ROUTE_CHANGE":
-      const newState = { 
-        ...state, 
-        path: msg.path,
-        nickname: msg.nickname || state.nickname
-      };
-      
-      return newState;
-    case "INIT_GAME_BOARD":
-      return {
-        ...state,
-        game: {
-          ...state.game,
-          board: msg.board
-        }
-      };
-    case "MOVE_PLAYER":
-      const updatedPlayers = state.game.players.map(player => 
-        player.id === msg.playerId 
-          ? { ...player, x: msg.x, y: msg.y, direction: msg.direction }
-          : player
-      );
-      return {
-        ...state,
-        game: {
-          ...state.game,
-          players: updatedPlayers
-        }
-      };
-    case "START_NEW_GAME":
-      return {
-        ...state,
-        game: {
-          ...state.game,
-          board: null,
-          players: [
-            { id: 1, x: 1, y: 1, direction: 'down', lives: 3, active: true },
-            { id: 2, x: 29, y: 1, direction: 'down', lives: 3, active: false },
-            { id: 3, x: 1, y: 11, direction: 'down', lives: 3, active: false },
-            { id: 4, x: 29, y: 11, direction: 'down', lives: 3, active: false }
-          ]
-        }
-      };
+      return { ...state, path: msg.path, nickname: msg.nickname || state.nickname };
+    case "JOIN_AND_NAVIGATE":
+      ws.send(JSON.stringify({ type: 'JOIN_AND_NAVIGATE', nickname: msg.nickname }));
+      return { ...state, path: msg.path, nickname: msg.nickname };
+    case "STATE_UPDATE":
+      return { ...state, ...msg.state, currentPlayerId: msg.currentPlayerId };
     default:
       return state;
   }
