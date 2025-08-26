@@ -159,6 +159,19 @@ button:disabled {
     white-space: nowrap;
 }
 
+.player-avatar {
+    width: 100px;
+    height: 100px;
+    background-size: 300%;
+    background-repeat: no-repeat;
+    background-position: 0 0;
+    margin: 0 auto 0.5rem;
+}
+
+.player-name {
+    text-align: center;
+}
+
 .player-badge.current-user {
     border-color: var(--primary);
     color: var(--primary);

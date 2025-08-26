@@ -23,5 +23,8 @@
   "homepage": "https://github.com/JosephOkumu/bomberman-dom#readme",
   "dependencies": {
     "ws": "^8.18.3"
+  },
+  "devDependencies": {
+    "http-server": "^14.1.1"
   }
 }

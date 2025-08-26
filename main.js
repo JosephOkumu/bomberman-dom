@@ -16,16 +16,33 @@ const initialState = {
 
 const ws = new WebSocket('ws://localhost:8080');
 
-ws.onopen = () => {
-  console.log('Connected to WebSocket server');
-};
+function setupWebSocket() {
+  ws.onopen = () => {
+    console.log('Connected to WebSocket server');
+  };
 
-ws.onmessage = event => {
-  const { type, state, currentPlayerId } = JSON.parse(event.data);
-  if (type === 'UPDATE_STATE') {
-    app.enqueue({ type: 'STATE_UPDATE', state, currentPlayerId });
-  }
-};
+  ws.onmessage = event => {
+    try {
+      const { type, state, currentPlayerId } = JSON.parse(event.data);
+      if (type === 'UPDATE_STATE') {
+        app.enqueue({ type: 'STATE_UPDATE', state, currentPlayerId });
+      }
+    } catch (error) {
+      console.error('Failed to process message:', error);
+    }
+  };
+
+  ws.onerror = error => {
+    console.error('WebSocket error:', error);
+  };
+
+  ws.onclose = () => {
+    console.log('WebSocket connection closed. Attempting to reconnect...');
+    setTimeout(setupWebSocket, 3000); // Reconnect after 3 seconds
+  };
+}
+
+setupWebSocket();
 
 function update(state, msg) {
   switch (msg.type) {
