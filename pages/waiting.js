@@ -1,7 +1,8 @@
 import domParser from "../MiniMvc/domParser.js";
 
 export default (state) => {
-  const { waitingPlayers, currentPlayerId } = state;
+  console.log('Waiting room state:', state);
+  const { waitingPlayers, currentPlayerId, gameStatus, timers } = state;
 
   const getAvatarPath = (avatar) => {
     switch (avatar) {
@@ -20,10 +21,13 @@ export default (state) => {
 
   const playerBadgesHTML = waitingPlayers.map(player => `
     <div class="player-badge ${player.id === currentPlayerId ? 'current-player' : ''}">
-      <div class="player-avatar" style="background-image: url('${getAvatarPath(player.avatar)}'); background-size: 300% 100%; background-repeat: no-repeat; background-position: 0 0;"></div>
+      <img src="${getAvatarPath(player.avatar)}" class="player-avatar" alt="${player.avatar}">
       <p class="player-name">${player.nickname}</p>
     </div>
   `).join('');
+
+  const minPlayersTimerVisible = gameStatus === 'waiting' && waitingPlayers.length >= 2;
+  const gameStartTimerVisible = gameStatus === 'starting';
 
   const htmlString = `
     <section id="waiting-room-screen" class="screen">
@@ -34,16 +38,16 @@ export default (state) => {
             </div>
             <p id="player-count" class="player-count">${waitingPlayers.length}/4 joined</p>
             <div class="timers">
-                <div class="timer-display">
+                <div class="timer-display" style="display: ${minPlayersTimerVisible ? 'block' : 'none'};">
                     <p>Auto-start with 2+ players in:</p>
-                    <strong id="min-players-timer">20s</strong>
+                    <strong id="min-players-timer">${timers.minPlayersTimer.remaining}s</strong>
                 </div>
-                <div class="timer-display">
+                <div class="timer-display" style="display: ${gameStartTimerVisible ? 'block' : 'none'};">
                     <p>Game starts in:</p>
-                    <strong id="game-start-timer">10s</strong>
+                    <strong id="game-start-timer">${timers.gameStartTimer.remaining}s</strong>
                 </div>
             </div>
-            <button id="start-game-btn" onclick="start">Start Now</button>
+            <button id="leave-btn" onclick="goBack">Leave</button>
         </div>
       </section>
   `
@@ -51,16 +55,7 @@ export default (state) => {
   const handlers = {
     goBack: (e) => {
       e.preventDefault();
-      const path = "/";
-      window.history.pushState({}, "", path);
-      return { type: "ROUTE_CHANGE", path };
-    },
-
-    start: (e) => {
-      e.preventDefault();
-      const path = "/game";
-      window.history.pushState({}, "", path);
-      return { type: "ROUTE_CHANGE", path };
+      return { type: "LEAVE_WAITING_ROOM" };
     }
   }
 
