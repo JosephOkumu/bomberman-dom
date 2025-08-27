@@ -2,167 +2,29 @@ import domParser from "../MiniMvc/domParser.js";
 import createKeyboardHandler from "../utils/movement.js";
 
 export default (state) => {
-  // Get current player and game state
-  const currentPlayer = state.game?.players?.find(p => p.id === state.game?.currentPlayer) || state.game?.players?.[0];
+  console.log("Game page state:", state);
+  const { gameStatus, winner } = state;
+  
+  // Fix: Use currentPlayerId from state to find the correct player
+  const currentPlayer = state.game?.players?.find(p => p.id === state.currentPlayerId);
   const allPlayers = state.game?.players || [];
   
-  // Use existing board or create new one - but store it immediately to prevent re-generation
-  let gameBoard;
-  if (state.game?.board) {
-    gameBoard = state.game.board;
-  } else {
-    // Generate board immediately and trigger state update before rendering
-    // Convert board string to 2D array - this should only happen once!
-    const boardLines = state.board || `
-   wwwwwwwwwwwwwwwwwwwwwwwwwwwwwww
-   wpppppppppppppppppppppppppppppw
-   wpwpwpwpwpwpwpwpwpwpwpwpwpwpwpw
-   wpppppppppppppppppppppppppppppw
-   wpwpwpwpwpwpwpwpwpwpwpwpwpwpwpw
-   wpppppppppppppppppppppppppppppw
-   wpwpwpwpwpwpwpwpwpwpwpwpwpwpwpw
-   wpppppppppppppppppppppppppppppw
-   wpwpwpwpwpwpwpwpwpwpwpwpwpwpwpw
-   wpppppppppppppppppppppppppppppw
-   wpwpwpwpwpwpwpwpwpwpwpwpwpwpwpw
-   wpppppppppppppppppppppppppppppw
-   wwwwwwwwwwwwwwwwwwwwwwwwwwwwwww
-  `.trim().split('\n').map(line => line.trim());
+  console.log("Current player ID:", state.currentPlayerId);
+  console.log("Current player object:", currentPlayer);
+  console.log("All players:", allPlayers);
+  const chatMessages = state.chatMessages || [];
+  const bombs = state.game?.bombs || [];
+  const explosions = state.game?.explosions || [];
+  const powerups = state.game?.powerups || [];
 
-    // Board randomization function with enhanced spawn protection and connectivity
-    const randomizeBoard = (board) => {
-      const rows = board.length;
-      const cols = board[0].length;
-      const maxRetries = 10;
-      
-      // Define enhanced 3x3 spawn protection zones
-      const getprtectedCells = () => {
-        const prtected = new Set();
-        
-        // Top-left 3x3 (spawn at 1,1)
-        for (let r = 1; r <= 3; r++) {
-          for (let c = 1; c <= 3; c++) {
-            prtected.add(`${r},${c}`);
-          }
-        }
-        
-        // Top-right 3x3 (spawn at 1,cols-2)
-        for (let r = 1; r <= 3; r++) {
-          for (let c = cols-4; c <= cols-2; c++) {
-            prtected.add(`${r},${c}`);
-          }
-        }
-        
-        // Bottom-left 3x3 (spawn at rows-2,1)
-        for (let r = rows-4; r <= rows-2; r++) {
-          for (let c = 1; c <= 3; c++) {
-            prtected.add(`${r},${c}`);
-          }
-        }
-        
-        // Bottom-right 3x3 (spawn at rows-2,cols-2)
-        for (let r = rows-4; r <= rows-2; r++) {
-          for (let c = cols-4; c <= cols-2; c++) {
-            prtected.add(`${r},${c}`);
-          }
-        }
-        
-        return prtected;
-      };
-      
-      // Flood fill to check connectivity
-      const isConnected = (testBoard) => {
-        const visited = new Set();
-        const queue = [];
-        
-        // Start from top-left spawn point
-        const startRow = 1, startCol = 1;
-        if (testBoard[startRow][startCol] !== 'p') return false;
-        
-        queue.push([startRow, startCol]);
-        visited.add(`${startRow},${startCol}`);
-        
-        const directions = [[0,1], [0,-1], [1,0], [-1,0]];
-        
-        while (queue.length > 0) {
-          const [row, col] = queue.shift();
-          
-          for (const [dr, dc] of directions) {
-            const newRow = row + dr;
-            const newCol = col + dc;
-            const key = `${newRow},${newCol}`;
-            
-            if (newRow >= 0 && newRow < rows && 
-                newCol >= 0 && newCol < cols &&
-                !visited.has(key) && 
-                testBoard[newRow][newCol] === 'p') {
-              visited.add(key);
-              queue.push([newRow, newCol]);
-            }
-          }
-        }
-        
-        // Check if all spawn points are reachable
-        const spawnPoints = [
-          [1, 1], [1, cols-2], [rows-2, 1], [rows-2, cols-2]
-        ];
-        
-        return spawnPoints.every(([r, c]) => 
-          testBoard[r][c] === 'p' && visited.has(`${r},${c}`)
-        );
-      };
-      
-      // Generate valid randomized board
-      const prtectedCells = getprtectedCells();
-      
-      for (let attempt = 0; attempt < maxRetries; attempt++) {
-        const testBoard = board.map(row => row.split(''));
-        
-        // Place temporary walls with 65% probability
-        for (let row = 1; row < rows - 1; row++) {
-          for (let col = 1; col < cols - 1; col++) {
-            const cellKey = `${row},${col}`;
-            
-            if (testBoard[row][col] === 'p' && !prtectedCells.has(cellKey)) {
-              if (Math.random() < 0.65) {
-                testBoard[row][col] = 't';
-              }
-            }
-          }
-        }
-        
-        // Verify connectivity
-        if (isConnected(testBoard)) {
-          return testBoard.map(row => row.join(''));
-        }
-      }
-      
-      // Fallback: return board with minimal walls if connectivity fails
-      const fallbackBoard = board.map(row => row.split(''));
-      for (let row = 1; row < rows - 1; row++) {
-        for (let col = 1; col < cols - 1; col++) {
-          const cellKey = `${row},${col}`;
-          if (fallbackBoard[row][col] === 'p' && !prtectedCells.has(cellKey)) {
-            if (Math.random() < 0.3) { // Reduced probability for fallback
-              fallbackBoard[row][col] = 't';
-            }
-          }
-        }
-      }
-      
-      return fallbackBoard.map(row => row.join(''));
-    };
+  // Create a single set of all explosion cells for efficient lookup
+  const explosionCells = new Set();
+  explosions.forEach(exp => {
+    exp.cells.forEach(cell => explosionCells.add(cell));
+  });
+  
+  const gameBoard = state.game?.board;
 
-    // Apply randomization to board - this should only happen once!
-    gameBoard = randomizeBoard(boardLines);
-    
-    // Immediately update state with the new board to prevent regeneration
-    if (state.enqueue) {
-      state.enqueue({ type: "INIT_GAME_BOARD", board: gameBoard });
-    }
-  }
-
-  // Generate board HTML
   const generateBoardHTML = () => {
     return gameBoard.map((row, rowIndex) => 
       `<div class="board-row" data-row="${rowIndex}">
@@ -172,13 +34,38 @@ export default (state) => {
           else if (cell === 't') cellClass += 'temp-wall';
           else cellClass += 'path';
           
-          // Add player sprites at their positions
-          const playersAtPosition = allPlayers.filter(p => p.active && p.x === colIndex && p.y === rowIndex);
+          // Get all entities at this position
+          const playersAtPosition = allPlayers.filter(p => 
+            p.active && p.x === colIndex && p.y === rowIndex
+          );
+          const bombsAtPosition = bombs.filter(b => 
+            b.x === colIndex && b.y === rowIndex
+          );
+          const powerupsAtPosition = powerups.filter(p => 
+            p.x === colIndex && p.y === rowIndex
+          );
+          const isExplosionCell = explosionCells.has(`${rowIndex},${colIndex}`);
+
+          // Generate sprites
           const playerSprites = playersAtPosition.map(player => 
-            `<div class="player-sprite player-${player.id}" data-direction="${player.direction}"></div>`
+            `<div class="player-sprite player-${player.avatar}" data-direction="${player.direction || 'down'}"></div>`
+          ).join('');
+
+          const bombSprites = bombsAtPosition.map(bomb => 
+            `<div class="bomb-sprite" data-bomb-id="${bomb.id}"></div>`
+          ).join('');
+
+          const explosionSprite = isExplosionCell ? 
+            '<div class="explosion-sprite"></div>' : '';
+
+          const powerupSprites = powerupsAtPosition.map(powerup => 
+            `<div class="powerup-sprite ${powerup.type}" data-powerup-id="${powerup.id}"></div>`
           ).join('');
           
           return `<div class="${cellClass}" data-row="${rowIndex}" data-col="${colIndex}">
+            ${powerupSprites}
+            ${explosionSprite}
+            ${bombSprites}
             ${playerSprites}
           </div>`;
         }).join('')}
@@ -186,8 +73,45 @@ export default (state) => {
     ).join('');
   };
 
+  const generateHudHTML = () => {
+    return allPlayers
+      .filter(player => player.nickname)
+      .map(player => `
+        <div class="player-hud ${!player.active ? 'dead' : ''}">
+          <div class="player-avatar-hud player-${player.avatar}"></div>
+          <div class="player-info">
+            <span class="nickname">${player.nickname}</span>
+            <span class="lives">Lives: ${player.lives}</span>
+          </div>
+        </div>
+      `).join('');
+  };
+
+  const generateGameOverHTML = () => {
+    if (gameStatus !== 'finished') return '';
+    const message = winner === 'Draw' ? 'It\'s a Draw!' : `${winner} Wins!`;
+    return `
+      <div class="game-over-overlay">
+        <div class="game-over-card">
+          <h1>Game Over</h1>
+          <p>${message}</p>
+          <button onclick="playAgain">Play Again</button>
+        </div>
+      </div>
+    `;
+  };
+
+  const chatMessagesHTML = chatMessages.map(msg => `
+    <div class="chat-message">
+      <span class="timestamp">${msg.timestamp}</span>
+      <span class="nickname">${msg.nickname}:</span>
+      <span class="message">${msg.message}</span>
+    </div>
+  `).join('');
+
   const htmlString = `
     <section id="game-screen" class="screen" onkeydown="handleKeyDown" tabindex="0" onfocus="focusGame">
+        ${generateGameOverHTML()}
         <div class="game-layout">
             <div class="game-area">
                 <div id="game-overlay" class="game-overlay">
@@ -201,16 +125,16 @@ export default (state) => {
             <aside id="sidebar">
                 <div class="sidebar-content">
                     <div id="hud-container" class="hud">
-                        <!-- Player HUDs will be dynamically inserted here -->
+                        ${generateHudHTML()}
                     </div>
                     <div class="chat-panel">
-                        <div id="chat-messages" class="chat-messages"></div>
-                        <form id="chat-form" class="chat-form">
+                        <div id="chat-messages" class="chat-messages">${chatMessagesHTML}</div>
+                        <form id="chat-form" class="chat-form" onsubmit="sendChat">
                             <input type="text" id="chat-input" placeholder="Type a message...">
                             <button type="submit">Send</button>
                         </form>
                     </div>
-                    <button id="leave-game-btn">Leave Game</button>
+                    <button id="leave-game-btn" onclick="leaveGame">Leave Game</button>
                 </div>
             </aside>
             <button id="sidebar-toggle-btn" class="sidebar-toggle">
@@ -220,7 +144,6 @@ export default (state) => {
     </section>
   `;
 
-  // Create the keyboard handler using the imported function
   const keyboardHandler = createKeyboardHandler(currentPlayer, allPlayers, state, gameBoard);
 
   const handlers = {
@@ -231,30 +154,44 @@ export default (state) => {
 
     sendChat: (e) => {
       e.preventDefault();
-      const message = e.target.closest('.chat-form').querySelector('#chat-input').value.trim();
+      const input = e.target.closest('.chat-form').querySelector('#chat-input');
+      const message = input.value.trim();
       if (!message) return;
-      // TODO: Send chat message to server
+      
+      input.value = '';
+      return { type: 'CHAT_MESSAGE', message };
     },
 
     focusGame: (e) => {
-      // Auto-focus the game screen when it loads
       e.target.focus();
     },
 
     handleKeyDown: (e) => {
       return keyboardHandler(e);
+    },
+
+    playAgain: (e) => {
+      e.preventDefault();
+      return { type: 'RESET_GAME' };
+    },
+
+    leaveGame: (e) => {
+      e.preventDefault();
+      return { type: 'LEAVE_GAME' };
     }
   };
 
   const result = domParser(htmlString, handlers);
   
-  // Auto-focus the game screen after it renders
   setTimeout(() => {
     const gameScreen = document.getElementById('game-screen');
-    if (gameScreen) {
-      gameScreen.focus();
+    if (gameScreen && gameStatus !== 'finished') {
+        gameScreen.focus();
     }
+    const chatMessagesContainer = document.getElementById('chat-messages');
+    if (chatMessagesContainer) chatMessagesContainer.scrollTop = chatMessagesContainer.scrollHeight;
   }, 100);
   
   return result;
 }
+
