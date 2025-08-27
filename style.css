@@ -600,58 +600,58 @@ button:disabled {
 }
 
 /* Player 1 - B1 sprites */
-.player-sprite.player-1[data-direction="up"] {
+.player-sprite.player-B1[data-direction="up"] {
     background-image: url('assets/B1/b1walkingup.png');
 }
-.player-sprite.player-1[data-direction="down"] {
+.player-sprite.player-B1[data-direction="down"] {
     background-image: url('assets/B1/b1walkDown.png');
 }
-.player-sprite.player-1[data-direction="left"] {
+.player-sprite.player-B1[data-direction="left"] {
     background-image: url('assets/B1/b1walkingleft.png');
 }
-.player-sprite.player-1[data-direction="right"] {
+.player-sprite.player-B1[data-direction="right"] {
     background-image: url('assets/B1/b1walkingright.png');
 }
 
 /* Player 2 - B2 sprites */
-.player-sprite.player-2[data-direction="up"] {
+.player-sprite.player-B2[data-direction="up"] {
     background-image: url('assets/B2/wakingup.png');
 }
-.player-sprite.player-2[data-direction="down"] {
+.player-sprite.player-B2[data-direction="down"] {
     background-image: url('assets/B2/walkingdown.png');
 }
-.player-sprite.player-2[data-direction="left"] {
+.player-sprite.player-B2[data-direction="left"] {
     background-image: url('assets/B2/walkingleft.png');
 }
-.player-sprite.player-2[data-direction="right"] {
+.player-sprite.player-B2[data-direction="right"] {
     background-image: url('assets/B2/walkingright.png');
 }
 
 /* Player 3 - B3 sprites */
-.player-sprite.player-3[data-direction="up"] {
+.player-sprite.player-B3[data-direction="up"] {
     background-image: url('assets/B3/up.png');
 }
-.player-sprite.player-3[data-direction="down"] {
+.player-sprite.player-B3[data-direction="down"] {
     background-image: url('assets/B3/down.png');
 }
-.player-sprite.player-3[data-direction="left"] {
+.player-sprite.player-B3[data-direction="left"] {
     background-image: url('assets/B3/left.png');
 }
-.player-sprite.player-3[data-direction="right"] {
+.player-sprite.player-B3[data-direction="right"] {
     background-image: url('assets/B3/right.png');
 }
 
 /* Player 4 - B4 sprites */
-.player-sprite.player-4[data-direction="up"] {
+.player-sprite.player-B4[data-direction="up"] {
     background-image: url('assets/B4/up.png');
 }
-.player-sprite.player-4[data-direction="down"] {
+.player-sprite.player-B4[data-direction="down"] {
     background-image: url('assets/B4/down.png');
 }
-.player-sprite.player-4[data-direction="left"] {
+.player-sprite.player-B4[data-direction="left"] {
     background-image: url('assets/B4/left.png');
 }
-.player-sprite.player-4[data-direction="right"] {
+.player-sprite.player-B4[data-direction="right"] {
     background-image: url('assets/B4/right.png');
 }
 
@@ -672,4 +672,73 @@ button:disabled {
 .player-badge.current-player {
   border: 2px solid #ffc107;
   border-radius: 5px;
+}
+
+/* Bomb Sprite - 2 frame animation */
+.bomb-sprite {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-image: url('assets/bomb.png');
+    background-size: 200% 100%;
+    background-repeat: no-repeat;
+    animation: bomb-animate 0.8s steps(2) infinite;
+}
+
+@keyframes bomb-animate {
+    from { background-position: 0% 0; }
+    to { background-position: -200% 0; }
+}
+
+/* Explosion Sprite */
+.explosion-sprite {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-image: url('assets/BomberManEffect.png');
+    background-size: 700% 300%; /* 7 frames x 3 rows */
+    background-repeat: no-repeat;
+    background-position: 0 0;
+    z-index: 8;
+    animation: explode 0.5s steps(7) infinite;
+}
+
+@keyframes explode {
+    0% { background-position-x: 0; }
+    100% { background-position-x: -600%; }
+}
+
+/* Powerup Sprites */
+.powerup-sprite {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-size: contain;
+    background-repeat: no-repeat;
+    background-position: center;
+    z-index: 3;
+    animation: powerup-glow 1s infinite alternate;
+}
+
+.powerup-sprite.bomb {
+    background-image: url('assets/bomb-powerup.png');
+}
+
+.powerup-sprite.flame {
+    background-image: url('assets/range.png');
+}
+
+.powerup-sprite.speed {
+    background-image: url('assets/speed.png');
+}
+
+@keyframes powerup-glow {
+    0% { filter: brightness(1); }
+    100% { filter: brightness(1.3); }
 }
