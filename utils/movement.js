@@ -3,7 +3,13 @@ export default function createKeyboardHandler(currentPlayer, allPlayers, state, 
     // Don't handle keys if typing in input fields
     if (e.target.tagName === 'INPUT') return;
     
-    if (!currentPlayer || !currentPlayer.active) return;
+    // Make sure we have a current player and it's active
+    if (!currentPlayer || !currentPlayer.active || !currentPlayer.id) {
+      console.log("No current player or player not active:", currentPlayer);
+      return;
+    }
+    
+    console.log("Handling movement for player:", currentPlayer.id, currentPlayer.nickname);
     
     let newX = currentPlayer.x;
     let newY = currentPlayer.y;
@@ -35,6 +41,9 @@ export default function createKeyboardHandler(currentPlayer, allPlayers, state, 
         newX = currentPlayer.x + 1;
         direction = 'right';
         break;
+      case ' ': // Spacebar for placing bombs
+        e.preventDefault();
+        return { type: 'PLACE_BOMB', payload: { playerId: currentPlayer.id } };
       default:
         return; // Don't prevent default for other keys
     }
