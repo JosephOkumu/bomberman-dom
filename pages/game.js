@@ -101,13 +101,21 @@ export default (state) => {
     `;
   };
 
-  const chatMessagesHTML = chatMessages.map(msg => `
-    <div class="chat-message">
-      <span class="timestamp">${msg.timestamp}</span>
-      <span class="nickname">${msg.nickname}:</span>
-      <span class="message">${msg.message}</span>
-    </div>
-  `).join('');
+  const chatMessagesHTML = chatMessages.map((msg, index) => {
+    // Find the player to get their avatar for styling
+    const player = allPlayers.find(p => p.nickname === msg.nickname);
+    const isCurrentPlayer = player && player.id === state.currentPlayerId;
+    
+    return `
+      <div class="chat-message ${isCurrentPlayer ? 'own-message' : ''}" data-player="${player?.avatar || 'unknown'}">
+        <div class="message-header">
+          <span class="nickname ${player?.avatar ? `player-${player.avatar}` : ''}">${msg.nickname}</span>
+          <span class="timestamp">${msg.timestamp}</span>
+        </div>
+        <div class="message-content">${msg.message}</div>
+      </div>
+    `;
+  }).join('');
 
   const htmlString = `
     <section id="game-screen" class="screen" onkeydown="handleKeyDown" tabindex="0" onfocus="focusGame">
