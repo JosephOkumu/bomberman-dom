@@ -114,9 +114,6 @@ export default (state) => {
         ${generateGameOverHTML()}
         <div class="game-layout">
             <div class="game-area">
-                <div id="game-overlay" class="game-overlay">
-                    <span id="game-timer-display">3:00</span>
-                </div>
                 <div id="game-board" class="game-board">
                     ${generateBoardHTML()}
                 </div>
