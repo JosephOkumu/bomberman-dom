@@ -389,20 +389,6 @@ button:disabled {
     display: none;
 }
 
-#game-overlay {
-    position: absolute;
-    top: 1rem;
-    left: 50%;
-    transform: translateX(-50%);
-    background: rgba(0, 0, 0, 0.8);
-    padding: 0.5rem 1rem;
-    border-radius: var(--border-radius);
-    font-family: var(--font-display);
-    font-size: 1.2rem;
-    color: var(--secondary);
-    z-index: 10;
-    border: 1px solid var(--secondary);
-}
 
 #sidebar {
     background: var(--bg-light);
