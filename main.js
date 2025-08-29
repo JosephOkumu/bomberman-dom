@@ -13,7 +13,7 @@ const initialState = {
     gameStartTimer: { remaining: 10 }
   },
   game: {
-    board: null,
+    board: [],
     players: [],
     bombs: [],
     explosions: [],
@@ -53,30 +53,106 @@ function update(state, msg) {
       ws.send(JSON.stringify({ type: 'JOIN_AND_NAVIGATE', nickname: msg.nickname }));
       return { ...state, path: msg.path, nickname: msg.nickname };
     case "STATE_UPDATE":
-      return { ...state, ...msg.state };
+        const newState = { ...state, ...msg.state };
+        if (Array.isArray(newState.game.board) && typeof newState.game.board[0] === 'string') {
+            const boardData = newState.game.board.map((row, y) => row.split('').map((cell, x) => ({
+                type: cell,
+                x,
+                y,
+                players: [],
+                bombs: [],
+                hasExplosion: false,
+                powerup: null,
+                isDirty: true
+            })));
+            newState.game.board = boardData;
+        }
+
+        // Clear previous positions
+        if (Array.isArray(newState.game.board)) {
+            newState.game.board.forEach(row => row.forEach(cell => {
+                cell.players = [];
+                cell.bombs = [];
+                cell.powerup = null;
+            }));
+        }
+
+        // Update with new positions
+        newState.game.players.forEach(player => {
+            if (player.active && newState.game.board[player.y] && newState.game.board[player.y][player.x]) {
+                newState.game.board[player.y][player.x].players.push(player);
+                newState.game.board[player.y][player.x].isDirty = true;
+            }
+        });
+        newState.game.bombs.forEach(bomb => {
+            if (newState.game.board[bomb.y] && newState.game.board[bomb.y][bomb.x]) {
+                newState.game.board[bomb.y][bomb.x].bombs.push(bomb);
+                newState.game.board[bomb.y][bomb.x].isDirty = true;
+            }
+        });
+        newState.game.powerups.forEach(powerup => {
+            if (newState.game.board[powerup.y] && newState.game.board[powerup.y][powerup.x]) {
+                newState.game.board[powerup.y][powerup.x].powerup = powerup;
+                newState.game.board[powerup.y][powerup.x].isDirty = true;
+            }
+        });
+
+        return newState;
     case "SET_PLAYER_ID":
       return { ...state, currentPlayerId: msg.playerId };
     case "GAME_STARTED":
-      return { ...state, ...msg.state, path: '/game', currentPlayerId: msg.currentPlayerId || state.currentPlayerId };
+        const boardData = msg.state.game.board.map((row, y) => row.split('').map((cell, x) => ({
+            type: cell,
+            x,
+            y,
+            players: [],
+            bombs: [],
+            hasExplosion: false,
+            powerup: null,
+            isDirty: true
+        })));
+
+        msg.state.game.players.forEach(player => {
+            if (player.active) {
+                boardData[player.y][player.x].players.push(player);
+            }
+        });
+
+        return { ...state, ...msg.state, game: { ...msg.state.game, board: boardData }, path: '/game', currentPlayerId: msg.currentPlayerId || state.currentPlayerId };
     case 'CHAT_MESSAGE':
       ws.send(JSON.stringify({ type: 'CHAT_MESSAGE', message: msg.message }));
       return state;
     case 'CHAT_MESSAGES_UPDATED':
       return { ...state, chatMessages: msg.messages };
     case 'MOVE_PLAYER':
-      ws.send(JSON.stringify({ type: 'PLAYER_MOVE', payload: { playerId: msg.playerId, x: msg.x, y: msg.y, direction: msg.direction } }));
-      return state;
-    
+        ws.send(JSON.stringify({ type: 'PLAYER_MOVE', payload: { playerId: msg.playerId, x: msg.x, y: msg.y, direction: msg.direction } }));
+        return state;
     case 'PLACE_BOMB':
       ws.send(JSON.stringify({ type: 'PLAYER_PLACE_BOMB', payload: msg.payload }));
       return state;
     case 'SHOW_EXPLOSION':
-      setTimeout(() => {
-        app.enqueue({ type: 'CLEAR_EXPLOSION', payload: { explosionId: msg.payload.explosionId } });
-      }, 500);
-      return { ...state, game: { ...state.game, explosions: [...state.game.explosions, msg.payload] } };
+        const newBoard = [...state.game.board];
+        msg.payload.cells.forEach(cellString => {
+            const [y, x] = cellString.split(',').map(Number);
+            if(newBoard[y] && newBoard[y][x]) {
+                newBoard[y][x].hasExplosion = true;
+                newBoard[y][x].isDirty = true;
+            }
+        });
+        setTimeout(() => {
+            app.enqueue({ type: 'CLEAR_EXPLOSION', payload: { explosionId: msg.payload.explosionId, cells: msg.payload.cells } });
+        }, 500);
+        return { ...state, game: { ...state.game, board: newBoard, explosions: [...state.game.explosions, msg.payload] } };
     case 'CLEAR_EXPLOSION':
-      return { ...state, game: { ...state.game, explosions: state.game.explosions.filter(exp => exp.explosionId !== msg.payload.explosionId) } };
+        const boardAfterExplosion = [...state.game.board];
+        msg.payload.cells.forEach(cellString => {
+            const [y, x] = cellString.split(',').map(Number);
+            if(boardAfterExplosion[y] && boardAfterExplosion[y][x]) {
+                boardAfterExplosion[y][x].hasExplosion = false;
+                boardAfterExplosion[y][x].isDirty = true;
+            }
+        });
+        return { ...state, game: { ...state.game, board: boardAfterExplosion, explosions: state.game.explosions.filter(exp => exp.explosionId !== msg.payload.explosionId) } };
     case 'SHOW_GAME_OVER':
       return { ...state, gameStatus: 'finished', winner: msg.payload.winner };
     case 'RESET_GAME':

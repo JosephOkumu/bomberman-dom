@@ -1,21 +1,15 @@
 export default function createKeyboardHandler(currentPlayer, allPlayers, state, gameBoard) {
   return (e) => {
-    // Don't handle keys if typing in input fields
     if (e.target.tagName === 'INPUT') return;
     
-    // Make sure we have a current player and it's active
     if (!currentPlayer || !currentPlayer.active || !currentPlayer.id) {
-      console.log("No current player or player not active:", currentPlayer);
       return;
     }
-    
-    console.log("Handling movement for player:", currentPlayer.id, currentPlayer.nickname);
     
     let newX = currentPlayer.x;
     let newY = currentPlayer.y;
     let direction = currentPlayer.direction;
     
-    // Handle movement keys
     switch (e.key) {
       case 'ArrowUp':
       case 'w':
@@ -45,22 +39,18 @@ export default function createKeyboardHandler(currentPlayer, allPlayers, state, 
         e.preventDefault();
         return { type: 'PLACE_BOMB', payload: { playerId: currentPlayer.id } };
       default:
-        return; // Don't prevent default for other keys
+        return;
     }
     
     e.preventDefault();
     
-    // Get the current board (use stored board from state)
-    const currentBoard = state.game.board || gameBoard;
+    const currentBoard = state.game.board;
     
-    // Check if the new position is valid (not a wall and within bounds)
     if (newY >= 0 && newY < currentBoard.length && 
         newX >= 0 && newX < currentBoard[0].length) {
       const targetCell = currentBoard[newY][newX];
       
-      // Check if target cell is walkable (path only)
-      if (targetCell === 'p') {
-        // Check if another player is already at this position
+      if (targetCell.type === 'p') {
         const playerAtPosition = allPlayers.find(p => 
           p.active && p.id !== currentPlayer.id && p.x === newX && p.y === newY
         );
@@ -77,7 +67,6 @@ export default function createKeyboardHandler(currentPlayer, allPlayers, state, 
       }
     }
     
-    // If movement is blocked, just update direction
     if (direction !== currentPlayer.direction) {
       return {
         type: "MOVE_PLAYER",
