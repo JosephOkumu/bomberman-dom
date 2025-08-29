@@ -124,7 +124,7 @@ function broadcast(data) {
 }
 
 function sanitize(str) {
-  return str.replace(/[&<>"'\/]/g, function (s) {
+  return str.replace(/[&<>'"\/]/g, function (s) {
     return {
       '&': '&amp;',
       '<': '&lt;',
@@ -161,6 +161,35 @@ function checkGameOver() {
     const winner = activePlayers.length === 1 ? activePlayers[0] : null;
     broadcast({ type: 'GAME_OVER', payload: { winner: winner ? winner.nickname : 'Draw' } });
   }
+}
+
+function respawnPlayer(player) {
+  const spawnPoints = [[1, 1], [29, 1], [1, 11], [29, 11]];
+  const preferredSpawn = player.spawnPoint;
+
+  const isOccupied = (x, y) => {
+    return gameState.game.players.some(p => p.active && p.x === x && p.y === y) ||
+           gameState.game.bombs.some(b => b.x === x && b.y === y);
+  };
+
+  // Check preferred spawn point first
+  if (preferredSpawn && !isOccupied(preferredSpawn.x, preferredSpawn.y)) {
+    player.x = preferredSpawn.x;
+    player.y = preferredSpawn.y;
+    return;
+  }
+
+  // Check other spawn points
+  for (const point of spawnPoints) {
+    const [x, y] = point;
+    if (!isOccupied(x, y)) {
+      player.x = x;
+      player.y = y;
+      return;
+    }
+  }
+
+  // If all spawn points are occupied, do nothing (or handle as a special case)
 }
 
 function explodeBomb(bombId) {
@@ -208,7 +237,9 @@ function explodeBomb(bombId) {
   gameState.game.players.forEach(player => {
     if (player.active && explosion.cells.has(`${player.y},${player.x}`)) {
       player.lives--;
-      if (player.lives <= 0) {
+      if (player.lives > 0) {
+        respawnPlayer(player);
+      } else {
         player.active = false;
       }
     }
@@ -262,6 +293,7 @@ function startGameCountdown() {
           if (spawnPositions[index]) {
             gamePlayer.x = spawnPositions[index][0];
             gamePlayer.y = spawnPositions[index][1];
+            gamePlayer.spawnPoint = { x: gamePlayer.x, y: gamePlayer.y };
           }
         }
       });
