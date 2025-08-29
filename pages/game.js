@@ -5,7 +5,6 @@ export default (state) => {
   console.log("Game page state:", state);
   const { gameStatus, winner } = state;
   
-  // Fix: Use currentPlayerId from state to find the correct player
   const currentPlayer = state.game?.players?.find(p => p.id === state.currentPlayerId);
   const allPlayers = state.game?.players || [];
   
@@ -13,62 +12,42 @@ export default (state) => {
   console.log("Current player object:", currentPlayer);
   console.log("All players:", allPlayers);
   const chatMessages = state.chatMessages || [];
-  const bombs = state.game?.bombs || [];
-  const explosions = state.game?.explosions || [];
-  const powerups = state.game?.powerups || [];
-
-  // Create a single set of all explosion cells for efficient lookup
-  const explosionCells = new Set();
-  explosions.forEach(exp => {
-    exp.cells.forEach(cell => explosionCells.add(cell));
-  });
   
   const gameBoard = state.game?.board;
 
+  const generateCellHTML = (cell) => {
+    let cellClass = 'board-cell ';
+    if (cell.type === 'w') cellClass += 'wall';
+    else if (cell.type === 't') cellClass += 'temp-wall';
+    else cellClass += 'path';
+
+    const playerSprites = cell.players.map(player => 
+      `<div class="player-sprite player-${player.avatar}" data-direction="${player.direction || 'down'}"></div>`
+    ).join('');
+
+    const bombSprites = cell.bombs.map(bomb => 
+      `<div class="bomb-sprite" data-bomb-id="${bomb.id}"></div>`
+    ).join('');
+
+    const explosionSprite = cell.hasExplosion ? 
+      '<div class="explosion-sprite"></div>' : '';
+
+    const powerupSprite = cell.powerup ? 
+      `<div class="powerup-sprite ${cell.powerup.type}" data-powerup-id="${cell.powerup.id}"></div>` : '';
+    
+    return `<div class="${cellClass}" data-row="${cell.y}" data-col="${cell.x}">
+      ${powerupSprite}
+      ${explosionSprite}
+      ${bombSprites}
+      ${playerSprites}
+    </div>`;
+  };
+
   const generateBoardHTML = () => {
-    return gameBoard.map((row, rowIndex) => 
-      `<div class="board-row" data-row="${rowIndex}">
-        ${row.split('').map((cell, colIndex) => {
-          let cellClass = 'board-cell ';
-          if (cell === 'w') cellClass += 'wall';
-          else if (cell === 't') cellClass += 'temp-wall';
-          else cellClass += 'path';
-          
-          // Get all entities at this position
-          const playersAtPosition = allPlayers.filter(p => 
-            p.active && p.x === colIndex && p.y === rowIndex
-          );
-          const bombsAtPosition = bombs.filter(b => 
-            b.x === colIndex && b.y === rowIndex
-          );
-          const powerupsAtPosition = powerups.filter(p => 
-            p.x === colIndex && p.y === rowIndex
-          );
-          const isExplosionCell = explosionCells.has(`${rowIndex},${colIndex}`);
-
-          // Generate sprites
-          const playerSprites = playersAtPosition.map(player => 
-            `<div class="player-sprite player-${player.avatar}" data-direction="${player.direction || 'down'}"></div>`
-          ).join('');
-
-          const bombSprites = bombsAtPosition.map(bomb => 
-            `<div class="bomb-sprite" data-bomb-id="${bomb.id}"></div>`
-          ).join('');
-
-          const explosionSprite = isExplosionCell ? 
-            '<div class="explosion-sprite"></div>' : '';
-
-          const powerupSprites = powerupsAtPosition.map(powerup => 
-            `<div class="powerup-sprite ${powerup.type}" data-powerup-id="${powerup.id}"></div>`
-          ).join('');
-          
-          return `<div class="${cellClass}" data-row="${rowIndex}" data-col="${colIndex}">
-            ${powerupSprites}
-            ${explosionSprite}
-            ${bombSprites}
-            ${playerSprites}
-          </div>`;
-        }).join('')}
+    if (!gameBoard) return '';
+    return gameBoard.map(row => 
+      `<div class="board-row" data-row="${row[0].y}">
+        ${row.map(cell => generateCellHTML(cell)).join('')}
       </div>`
     ).join('');
   };
@@ -182,6 +161,24 @@ export default (state) => {
   };
 
   const result = domParser(htmlString, handlers);
+
+  const updateCell = (cell) => {
+    const cellElement = document.querySelector(`[data-row="${cell.y}"][data-col="${cell.x}"]`);
+    if (cellElement) {
+        cellElement.outerHTML = generateCellHTML(cell);
+    }
+  };
+
+  if (state.game.board) {
+    state.game.board.forEach(row => {
+        row.forEach(cell => {
+            if (cell.isDirty) {
+                updateCell(cell);
+                cell.isDirty = false;
+            }
+        });
+    });
+  }
   
   setTimeout(() => {
     const gameScreen = document.getElementById('game-screen');
@@ -194,4 +191,3 @@ export default (state) => {
   
   return result;
 }
-
