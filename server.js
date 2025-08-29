@@ -124,7 +124,7 @@ function broadcast(data) {
 }
 
 function sanitize(str) {
-  return str.replace(/[&<>'"/]/g, function (s) {
+  return str.replace(/[&<>"'\/]/g, function (s) {
     return {
       '&': '&amp;',
       '<': '&lt;',
@@ -186,11 +186,14 @@ function explodeBomb(bombId) {
       if (y < 0 || y >= board.length || x < 0 || x >= board[0].length) break;
 
       const cell = board[y][x];
-      explosion.cells.add(`${y},${x}`);
 
       if (cell === 'w') {
         break;
-      } else if (cell === 't') {
+      }
+      
+      explosion.cells.add(`${y},${x}`);
+
+      if (cell === 't') {
         board[y][x] = 'p';
         if (Math.random() < 0.3) {
           const powerupTypes = ['bomb', 'flame', 'speed'];
@@ -267,8 +270,8 @@ function startGameCountdown() {
       wss.clients.forEach(client => {
         if (client.readyState === WebSocket.OPEN) {
           const playerData = gameState.game.players.find(p => p.id === client.clientId);
-          client.send(JSON.stringify({ 
-            type: 'GAME_START', 
+          client.send(JSON.stringify({
+            type: 'GAME_START',
             state: gameState,
             currentPlayerId: client.clientId
           }));
@@ -335,9 +338,9 @@ wss.on('connection', ws => {
           gameState.availableAvatars.shift();
 
           // Send the player their own ID
-          ws.send(JSON.stringify({ 
-            type: 'SET_PLAYER_ID', 
-            playerId: clientId 
+          ws.send(JSON.stringify({
+            type: 'SET_PLAYER_ID',
+            playerId: clientId
           }));
           
           broadcast({ type: 'UPDATE_STATE', state: gameState });
