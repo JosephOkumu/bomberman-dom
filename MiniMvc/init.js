@@ -30,8 +30,8 @@ export default (root, initialState, update, view) => {
     isDrawing = true;
     
     try {
-      const stateWithEnqueue = { ...state, enqueue };
-      let newNodes = await view(stateWithEnqueue);
+      const getState = () => state;
+      let newNodes = await view(state, enqueue, getState);
       
       // Batch DOM updates
       const diff = diffList(nodes, newNodes);

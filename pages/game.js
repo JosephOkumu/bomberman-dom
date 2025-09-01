@@ -1,7 +1,7 @@
 import domParser from "../MiniMvc/domParser.js";
-import createKeyboardHandler from "../utils/movement.js";
+import { initMovement } from "../utils/smoothMovement.js";
 
-export default (state) => {
+export default (state, dispatch, getState) => {
   console.log("Game page state:", state);
   const { gameStatus, winner } = state;
   
@@ -97,7 +97,7 @@ export default (state) => {
   }).join('');
 
   const htmlString = `
-    <section id="game-screen" class="screen" onkeydown="handleKeyDown" tabindex="0" onfocus="focusGame">
+    <section id="game-screen" class="screen" tabindex="0" onfocus="focusGame">
         ${generateGameOverHTML()}
         <div class="game-layout">
             <div class="game-area">
@@ -128,8 +128,6 @@ export default (state) => {
     </section>
   `;
 
-  const keyboardHandler = createKeyboardHandler(currentPlayer, allPlayers, state, gameBoard);
-
   const handlers = {
     toggleSidebar: (e) => {
       e.preventDefault();
@@ -148,10 +146,6 @@ export default (state) => {
 
     focusGame: (e) => {
       e.target.focus();
-    },
-
-    handleKeyDown: (e) => {
-      return keyboardHandler(e);
     },
 
     playAgain: (e) => {
@@ -192,6 +186,8 @@ export default (state) => {
     }
     const chatMessagesContainer = document.getElementById('chat-messages');
     if (chatMessagesContainer) chatMessagesContainer.scrollTop = chatMessagesContainer.scrollHeight;
+    
+    initMovement(dispatch, getState);
   }, 100);
   
   return result;

@@ -4,7 +4,7 @@ const router = new FileRouter('../pages');
 const componentCache = new Map();
 const routeCache = new Map();
 
-export default async (state) => {
+export default async (state, dispatch, getState) => {
   const currentPath = state.path || window.location.pathname || '/';
   
   try {
@@ -13,7 +13,7 @@ export default async (state) => {
     if (componentCache.has(cacheKey)) {
       const cachedComponent = componentCache.get(cacheKey);
       const enhancedState = { ...state, params: state.params || {}, path: currentPath };
-      return cachedComponent(enhancedState);
+      return cachedComponent(enhancedState, dispatch, getState);
     }
 
     // Use cached routes if available
@@ -46,7 +46,7 @@ export default async (state) => {
       componentCache.set(cacheKey, component);
       
       const enhancedState = { ...state, params, path: currentPath };
-      return component(enhancedState);
+      return component(enhancedState, dispatch, getState);
     }
 
     // 404 fallback - cache this too
