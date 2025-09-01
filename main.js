@@ -124,10 +124,10 @@ function update(state, msg) {
       return state;
     case 'CHAT_MESSAGES_UPDATED':
       return { ...state, chatMessages: msg.messages };
-    case 'MOVE_PLAYER':
-        ws.send(JSON.stringify({ type: 'PLAYER_MOVE', payload: { playerId: msg.playerId, x: msg.x, y: msg.y, direction: msg.direction } }));
+    case 'PLAYER_MOVE':
+        ws.send(JSON.stringify({ type: 'PLAYER_MOVE', payload: msg.payload }));
         return state;
-    case 'PLACE_BOMB':
+    case 'PLAYER_PLACE_BOMB':
       ws.send(JSON.stringify({ type: 'PLAYER_PLACE_BOMB', payload: msg.payload }));
       return state;
     case 'SHOW_EXPLOSION':
