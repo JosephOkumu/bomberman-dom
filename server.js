@@ -124,7 +124,7 @@ function broadcast(data) {
 }
 
 function sanitize(str) {
-  return str.replace(/[&<>'"/]/g, function (s) {
+  return str.replace(/[&<>'"\/]/g, function (s) {
     return {
       '&': '&amp;',
       '<': '&lt;',
@@ -163,6 +163,35 @@ function checkGameOver() {
   }
 }
 
+function respawnPlayer(player) {
+  const spawnPoints = [[1, 1], [29, 1], [1, 11], [29, 11]];
+  const preferredSpawn = player.spawnPoint;
+
+  const isOccupied = (x, y) => {
+    return gameState.game.players.some(p => p.active && p.x === x && p.y === y) ||
+           gameState.game.bombs.some(b => b.x === x && b.y === y);
+  };
+
+  // Check preferred spawn point first
+  if (preferredSpawn && !isOccupied(preferredSpawn.x, preferredSpawn.y)) {
+    player.x = preferredSpawn.x;
+    player.y = preferredSpawn.y;
+    return;
+  }
+
+  // Check other spawn points
+  for (const point of spawnPoints) {
+    const [x, y] = point;
+    if (!isOccupied(x, y)) {
+      player.x = x;
+      player.y = y;
+      return;
+    }
+  }
+
+  // If all spawn points are occupied, do nothing (or handle as a special case)
+}
+
 function explodeBomb(bombId) {
   const bombIndex = gameState.game.bombs.findIndex(b => b.id === bombId);
   if (bombIndex === -1) return;
@@ -186,11 +215,14 @@ function explodeBomb(bombId) {
       if (y < 0 || y >= board.length || x < 0 || x >= board[0].length) break;
 
       const cell = board[y][x];
-      explosion.cells.add(`${y},${x}`);
 
       if (cell === 'w') {
         break;
-      } else if (cell === 't') {
+      }
+      
+      explosion.cells.add(`${y},${x}`);
+
+      if (cell === 't') {
         board[y][x] = 'p';
         if (Math.random() < 0.3) {
           const powerupTypes = ['bomb', 'flame', 'speed'];
@@ -205,7 +237,9 @@ function explodeBomb(bombId) {
   gameState.game.players.forEach(player => {
     if (player.active && explosion.cells.has(`${player.y},${player.x}`)) {
       player.lives--;
-      if (player.lives <= 0) {
+      if (player.lives > 0) {
+        respawnPlayer(player);
+      } else {
         player.active = false;
       }
     }
@@ -259,6 +293,7 @@ function startGameCountdown() {
           if (spawnPositions[index]) {
             gamePlayer.x = spawnPositions[index][0];
             gamePlayer.y = spawnPositions[index][1];
+            gamePlayer.spawnPoint = { x: gamePlayer.x, y: gamePlayer.y };
           }
         }
       });
@@ -267,8 +302,8 @@ function startGameCountdown() {
       wss.clients.forEach(client => {
         if (client.readyState === WebSocket.OPEN) {
           const playerData = gameState.game.players.find(p => p.id === client.clientId);
-          client.send(JSON.stringify({ 
-            type: 'GAME_START', 
+          client.send(JSON.stringify({
+            type: 'GAME_START',
             state: gameState,
             currentPlayerId: client.clientId
           }));
@@ -335,9 +370,9 @@ wss.on('connection', ws => {
           gameState.availableAvatars.shift();
 
           // Send the player their own ID
-          ws.send(JSON.stringify({ 
-            type: 'SET_PLAYER_ID', 
-            playerId: clientId 
+          ws.send(JSON.stringify({
+            type: 'SET_PLAYER_ID',
+            playerId: clientId
           }));
           
           broadcast({ type: 'UPDATE_STATE', state: gameState });
@@ -358,7 +393,7 @@ wss.on('connection', ws => {
         break;
       
       case 'PLAYER_MOVE':
-        const { playerId, x, y, direction } = msg.payload;
+        const { playerId, direction } = msg.payload;
         
         // Verify the client is trying to move their own player
         if (playerId !== clientId) {
@@ -370,13 +405,31 @@ wss.on('connection', ws => {
         const board = gameState.game.board;
 
         if (gamePlayer && board && gamePlayer.active) {
-          if (y >= 0 && y < board.length && x >= 0 && x < board[0].length && board[y][x] === 'p') {
-            gamePlayer.x = x;
-            gamePlayer.y = y;
+          let newX = gamePlayer.x;
+          let newY = gamePlayer.y;
+
+          switch (direction) {
+            case 'up':
+              newY--;
+              break;
+            case 'down':
+              newY++;
+              break;
+            case 'left':
+              newX--;
+              break;
+            case 'right':
+              newX++;
+              break;
+          }
+
+          if (newY >= 0 && newY < board.length && newX >= 0 && newX < board[0].length && board[newY][newX] === 'p') {
+            gamePlayer.x = newX;
+            gamePlayer.y = newY;
             gamePlayer.direction = direction;
 
             // Handle powerup collection
-            const powerupIndex = gameState.game.powerups.findIndex(p => p.x === x && p.y === y);
+            const powerupIndex = gameState.game.powerups.findIndex(p => p.x === newX && p.y === newY);
             if (powerupIndex !== -1) {
               const powerup = gameState.game.powerups[powerupIndex];
               if (powerup.type === 'bomb') gamePlayer.maxBombs++;
@@ -385,6 +438,9 @@ wss.on('connection', ws => {
               gameState.game.powerups.splice(powerupIndex, 1);
             }
 
+            broadcast({ type: 'UPDATE_STATE', state: gameState });
+          } else if (direction !== gamePlayer.direction) {
+            gamePlayer.direction = direction;
             broadcast({ type: 'UPDATE_STATE', state: gameState });
           }
         }

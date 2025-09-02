@@ -36,9 +36,9 @@ export default function initWithRouting(root, initialState, update, createMainVi
     return update(state, msg);
   }
 
-  async function enhancedView(state) {
+  async function enhancedView(state, dispatch, getState) {
     try {
-      const routedContent = await viewRoute(state);
+      const routedContent = await viewRoute(state, dispatch, getState);
       return createMainView(state, routedContent);
     } catch (error) {
       console.error('View error:', error);
