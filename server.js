@@ -124,7 +124,7 @@ function broadcast(data) {
 }
 
 function sanitize(str) {
-  return str.replace(/[&<>'"\/]/g, function (s) {
+  return str.replace(/[&<>"'\/]/g, function (s) {
     return {
       '&': '&amp;',
       '<': '&lt;',
@@ -423,7 +423,13 @@ wss.on('connection', ws => {
               break;
           }
 
+          const oldX = gamePlayer.x;
+          const oldY = gamePlayer.y;
+          let dirtyCells = [];
+
           if (newY >= 0 && newY < board.length && newX >= 0 && newX < board[0].length && board[newY][newX] === 'p') {
+            dirtyCells.push({ x: oldX, y: oldY });
+            dirtyCells.push({ x: newX, y: newY });
             gamePlayer.x = newX;
             gamePlayer.y = newY;
             gamePlayer.direction = direction;
@@ -438,10 +444,11 @@ wss.on('connection', ws => {
               gameState.game.powerups.splice(powerupIndex, 1);
             }
 
-            broadcast({ type: 'UPDATE_STATE', state: gameState });
+            broadcast({ type: 'UPDATE_STATE', state: gameState, dirtyCells });
           } else if (direction !== gamePlayer.direction) {
+            dirtyCells.push({ x: oldX, y: oldY });
             gamePlayer.direction = direction;
-            broadcast({ type: 'UPDATE_STATE', state: gameState });
+            broadcast({ type: 'UPDATE_STATE', state: gameState, dirtyCells });
           }
         }
         break;
