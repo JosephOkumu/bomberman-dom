@@ -29,9 +29,9 @@ ws.onopen = () => {
 };
 
 ws.onmessage = event => {
-  const { type, state, currentPlayerId, messages, payload, playerId } = JSON.parse(event.data);
+  const { type, state, currentPlayerId, messages, payload, playerId, dirtyCells } = JSON.parse(event.data);
   if (type === 'UPDATE_STATE') {
-    app.enqueue({ type: 'STATE_UPDATE', state });
+    app.enqueue({ type: 'STATE_UPDATE', state, dirtyCells });
   } else if (type === 'SET_PLAYER_ID') {
     app.enqueue({ type: 'SET_PLAYER_ID', playerId });
   } else if (type === 'GAME_START') {
@@ -53,51 +53,56 @@ function update(state, msg) {
       ws.send(JSON.stringify({ type: 'JOIN_AND_NAVIGATE', nickname: msg.nickname }));
       return { ...state, path: msg.path, nickname: msg.nickname };
     case "STATE_UPDATE":
-        const newState = { ...state, ...msg.state };
-        if (Array.isArray(newState.game.board) && typeof newState.game.board[0] === 'string') {
-            const boardData = newState.game.board.map((row, y) => row.split('').map((cell, x) => ({
-                type: cell,
-                x,
-                y,
-                players: [],
-                bombs: [],
-                hasExplosion: false,
-                powerup: null,
-                isDirty: true
-            })));
-            newState.game.board = boardData;
+      const { state: serverState, dirtyCells } = msg;
+      const newState = { ...state, ...serverState };
+
+      if (Array.isArray(newState.game.board) && typeof newState.game.board[0] === 'string') {
+        // Initial board setup from string array
+        const boardData = newState.game.board.map((row, y) => row.split('').map((cell, x) => ({
+          type: cell, x, y, players: [], bombs: [], hasExplosion: false, powerup: null, isDirty: true
+        })));
+        newState.game.board = boardData;
+      } else if (state.game.board) {
+        // Create a new board based on the old one, resetting dirty flags
+        newState.game.board = state.game.board.map(row => row.map(cell => ({ ...cell, isDirty: false })));
+      }
+
+      // Clear dynamic entities before re-placing them
+      if (Array.isArray(newState.game.board)) {
+        newState.game.board.forEach(row => row.forEach(cell => {
+          cell.players = [];
+          cell.bombs = [];
+          cell.powerup = null;
+        }));
+      }
+
+      // Place players, bombs, and powerups from the new state
+      newState.game.players.forEach(player => {
+        if (player.active && newState.game.board[player.y] && newState.game.board[player.y][player.x]) {
+          newState.game.board[player.y][player.x].players.push(player);
         }
-
-        // Clear previous positions
-        if (Array.isArray(newState.game.board)) {
-            newState.game.board.forEach(row => row.forEach(cell => {
-                cell.players = [];
-                cell.bombs = [];
-                cell.powerup = null;
-            }));
+      });
+      newState.game.bombs.forEach(bomb => {
+        if (newState.game.board[bomb.y] && newState.game.board[bomb.y][bomb.x]) {
+          newState.game.board[bomb.y][bomb.x].bombs.push(bomb);
         }
+      });
+      newState.game.powerups.forEach(powerup => {
+        if (newState.game.board[powerup.y] && newState.game.board[powerup.y][powerup.x]) {
+          newState.game.board[powerup.y][powerup.x].powerup = powerup;
+        }
+      });
 
-        // Update with new positions
-        newState.game.players.forEach(player => {
-            if (player.active && newState.game.board[player.y] && newState.game.board[player.y][player.x]) {
-                newState.game.board[player.y][player.x].players.push(player);
-                newState.game.board[player.y][player.x].isDirty = true;
-            }
+      // Use server-provided dirtyCells to mark specific cells for re-render
+      if (dirtyCells) {
+        dirtyCells.forEach(dc => {
+          if (newState.game.board[dc.y] && newState.game.board[dc.y][dc.x]) {
+            newState.game.board[dc.y][dc.x].isDirty = true;
+          }
         });
-        newState.game.bombs.forEach(bomb => {
-            if (newState.game.board[bomb.y] && newState.game.board[bomb.y][bomb.x]) {
-                newState.game.board[bomb.y][bomb.x].bombs.push(bomb);
-                newState.game.board[bomb.y][bomb.x].isDirty = true;
-            }
-        });
-        newState.game.powerups.forEach(powerup => {
-            if (newState.game.board[powerup.y] && newState.game.board[powerup.y][powerup.x]) {
-                newState.game.board[powerup.y][powerup.x].powerup = powerup;
-                newState.game.board[powerup.y][powerup.x].isDirty = true;
-            }
-        });
+      }
 
-        return newState;
+      return newState;
     case "SET_PLAYER_ID":
       return { ...state, currentPlayerId: msg.playerId };
     case "GAME_STARTED":
